@@ -1,6 +1,27 @@
 import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge"
 
+export interface User {
+    id: number;
+    name: string;
+    profile_picture: string | null;
+}
+
+export interface Message {
+    id: number;
+    content: string;
+    user: User;
+    created_at: string;
+}
+
+export interface Channel {
+    id: number;
+    name: string;
+    users_count: number;
+    channel_type: number;
+    messages: Message[];
+}
+
 export enum ChannelType {
   Public = 0,
   Private = 1,
