@@ -3,7 +3,7 @@ import { Head, router } from '@inertiajs/react';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { UsersIcon, Bold, Italic, Underline, Code, Link as LinkIcon, Send, Plus } from 'lucide-react';
+import { UsersIcon, Bold, Italic, Underline, Code, Link as LinkIcon, Send, Plus, User } from 'lucide-react';
 import { PageProps } from '@/types';
 import { FormEvent, useState, useRef, useEffect } from 'react';
 import axios from 'axios';
@@ -38,7 +38,7 @@ export default function Dashboard({ channels, currentChannel, auth }: Props) {
     const [message, setMessage] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [localMessages, setLocalMessages] = useState<Message[]>(
-        [...currentChannel.messages].reverse()
+        currentChannel.messages
     );
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -49,6 +49,27 @@ export default function Dashboard({ channels, currentChannel, auth }: Props) {
     useEffect(() => {
         scrollToBottom();
     }, [localMessages]);
+
+    // Subscribe to WebSocket events
+    useEffect(() => {
+        // Clean up previous subscription if any
+        window.Echo?.leave(`channel.${currentChannel.id}`);
+        
+        // Subscribe to the new channel
+        const channel = window.Echo
+            .private(`channel.${currentChannel.id}`)
+            .listen('MessagePosted', (event: { message: Message }) => {
+                // Only add the message if it's not from the current user
+                if (event.message.user.id !== auth.user.id) {
+                    setLocalMessages(prev => [...prev, event.message]);
+                }
+            });
+
+        // Cleanup on unmount or channel change
+        return () => {
+            window.Echo?.leave(`channel.${currentChannel.id}`);
+        };
+    }, [currentChannel.id, auth.user.id]);
 
     const handleSubmit = async (e: FormEvent) => {
         e.preventDefault();
@@ -95,12 +116,9 @@ export default function Dashboard({ channels, currentChannel, auth }: Props) {
                     <div className="space-y-4">
                         {localMessages.map((message) => (
                             <div key={message.id} className="flex items-start gap-3 group">
-                                <div 
-                                    className="w-8 h-8 rounded-full bg-muted bg-cover bg-center"
-                                    style={message.user.profile_picture ? {
-                                        backgroundImage: `url(${message.user.profile_picture})`
-                                    } : undefined}
-                                />
+                                <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center">
+                                    <User className="h-4 w-4 text-muted-foreground" />
+                                </div>
                                 <div className="flex-1 space-y-1">
                                     <div className="flex items-center gap-2">
                                         <span className="font-medium">{message.user.name}</span>

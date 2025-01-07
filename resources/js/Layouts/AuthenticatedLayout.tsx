@@ -5,7 +5,7 @@ import { PropsWithChildren } from 'react';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
-import { Plus } from 'lucide-react';
+import { Plus, User } from 'lucide-react';
 import { PageProps } from '@/types';
 
 interface Channel {
@@ -35,7 +35,9 @@ export default function Authenticated({
                     <Dropdown>
                         <Dropdown.Trigger>
                             <button className="flex items-center w-full text-left">
-                                <ApplicationLogo className="block h-8 w-auto me-2 fill-current text-gray-800 dark:text-gray-200" />
+                                <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center me-2">
+                                    <User className="h-4 w-4 text-muted-foreground" />
+                                </div>
                                 <div className="flex-1">
                                     <div className="text-sm font-semibold text-gray-800 dark:text-gray-200">{props.auth.user.name}</div>
                                     <div className="text-xs text-gray-500">{props.auth.user.email}</div>

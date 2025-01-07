@@ -25,6 +25,8 @@ class MessageController extends Controller
             'user_id' => Auth::id(),
         ]);
 
+        broadcast(new \App\Events\MessagePosted($message));
+
         return $message->load('user:id,name,profile_picture');
     }
 } 
