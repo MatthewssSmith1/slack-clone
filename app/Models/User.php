@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 class User extends Authenticatable
 {
@@ -34,5 +35,12 @@ class User extends Authenticatable
             'password' => 'hashed',
             'last_active_at' => 'datetime',
         ];
+    }
+
+    public function channels(): BelongsToMany
+    {
+        return $this->belongsToMany(Channel::class)
+            ->withTimestamps()
+            ->withPivot(['role']);
     }
 }

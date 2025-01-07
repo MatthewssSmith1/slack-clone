@@ -14,9 +14,11 @@ Route::get('/', function () {
     ]);
 });
 
-Route::get('/dashboard', function () {
-    return Inertia::render('Dashboard');
-})->middleware(['auth', 'verified'])->name('dashboard');
+Route::middleware(['auth', 'verified'])->group(function () {
+    Route::get('/dashboard', [App\Http\Controllers\ChannelController::class, 'index'])->name('dashboard');
+    Route::get('/channels/{channel}', [App\Http\Controllers\ChannelController::class, 'show'])->name('channels.show');
+    Route::post('/channels/{channel}/messages', [App\Http\Controllers\MessageController::class, 'store'])->name('messages.store');
+});
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
