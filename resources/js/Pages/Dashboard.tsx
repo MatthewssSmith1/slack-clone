@@ -8,6 +8,7 @@ import { PageProps } from '@/types';
 import { FormEvent, useState, useRef, useEffect } from 'react';
 import axios from 'axios';
 import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
+import { formatDMChannelName, ChannelType } from '@/lib/utils';
 
 interface User {
     id: number;
@@ -26,6 +27,7 @@ interface Channel {
     id: number;
     name: string;
     users_count: number;
+    channel_type: number;
     messages: Message[];
 }
 
@@ -55,8 +57,7 @@ export default function Dashboard({ channels, currentChannel, auth }: Props) {
         // Clean up previous subscription if any
         window.Echo?.leave(`channel.${currentChannel.id}`);
         
-        // Subscribe to the new channel
-        const channel = window.Echo
+        window.Echo
             .private(`channel.${currentChannel.id}`)
             .listen('MessagePosted', (event: { message: Message }) => {
                 // Only add the message if it's not from the current user
@@ -65,13 +66,12 @@ export default function Dashboard({ channels, currentChannel, auth }: Props) {
                 }
             });
 
-        // Cleanup on unmount or channel change
         return () => {
             window.Echo?.leave(`channel.${currentChannel.id}`);
         };
     }, [currentChannel.id, auth.user.id]);
 
-    const handleSubmit = async (e: FormEvent) => {
+    const sendMessage = async (e: FormEvent) => {
         e.preventDefault();
         if (!message.trim() || isSubmitting) return;
 
@@ -102,27 +102,31 @@ export default function Dashboard({ channels, currentChannel, auth }: Props) {
                 <div className="border-b border-border bg-card">
                     <div className="px-4 py-3 flex items-center justify-between">
                         <h1 className="text-xl font-semibold">
-                            #{currentChannel.name}
+                            {currentChannel.channel_type !== ChannelType.Direct ? 
+                                `#${currentChannel.name}` : 
+                                formatDMChannelName(currentChannel.name, auth.user.name)}
                         </h1>
-                        <div className="flex items-center gap-2 text-muted-foreground">
-                            <UsersIcon className="w-4 h-4" />
-                            <span className="text-sm">{currentChannel.users_count}</span>
-                        </div>
+                        {currentChannel.channel_type !== ChannelType.Direct && (
+                            <div className="flex items-center gap-2 text-muted-foreground">
+                                <UsersIcon className="w-4 h-4" />
+                                <span className="text-sm">{currentChannel.users_count}</span>
+                            </div>
+                        )}
                     </div>
                 </div>
 
                 {/* Messages Area */}
                 <div className="flex-1 overflow-y-auto bg-background p-4">
-                    <div className="space-y-4">
+                    <div className="space-y-2">
                         {localMessages.map((message) => (
                             <div key={message.id} className="flex items-start gap-3 group">
-                                <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center">
+                                <div className="w-8 h-8 mt-1.5 rounded-full bg-muted flex items-center justify-center">
                                     <User className="h-4 w-4 text-muted-foreground" />
                                 </div>
-                                <div className="flex-1 space-y-1">
+                                <div className="flex-1">
                                     <div className="flex items-center gap-2">
                                         <span className="font-medium">{message.user.name}</span>
-                                        <span className="text-xs text-muted-foreground">
+                                        <span className="text-xs mt-[1px] text-muted-foreground">
                                             {new Date(message.created_at).toLocaleTimeString([], { 
                                                 hour: 'numeric', 
                                                 minute: '2-digit'
@@ -139,7 +143,7 @@ export default function Dashboard({ channels, currentChannel, auth }: Props) {
 
                 {/* Message Input Area */}
                 <div className="bg-background p-4">
-                    <form onSubmit={handleSubmit} className="border border-border rounded-md bg-card">
+                    <form onSubmit={sendMessage} className="border border-border rounded-md bg-card">
                         {/* Top Button Row */}
                         <div className="flex gap-2 p-2">
                             <Button type="button" variant="ghost" size="sm" className="h-8 w-8 p-0">
@@ -168,7 +172,15 @@ export default function Dashboard({ channels, currentChannel, auth }: Props) {
                         <Textarea 
                             value={message}
                             onChange={(e) => setMessage(e.target.value)}
-                            placeholder={`Message #${currentChannel.name}`}
+                            onKeyDown={(e) => {
+                                if (e.key !== 'Enter' || e.shiftKey) return;
+                                e.preventDefault();
+                                
+                                if (message.trim() && !isSubmitting) sendMessage(e);
+                            }}
+                            placeholder={`Message ${currentChannel.channel_type !== ChannelType.Direct ? 
+                                `#${currentChannel.name}` : 
+                                formatDMChannelName(currentChannel.name, auth.user.name)}`}
                             className="min-h-[100px] resize-none border-0 focus-visible:ring-0 rounded-none px-3 py-2"
                         />
 
@@ -201,6 +213,7 @@ export default function Dashboard({ channels, currentChannel, auth }: Props) {
                                             size="sm"
                                             variant="ghost"
                                             className="h-8 w-8 p-0"
+                                            onClick={sendMessage}
                                         >
                                             <Send className="h-4 w-4" />
                                         </Button>

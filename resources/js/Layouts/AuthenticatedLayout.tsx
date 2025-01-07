@@ -7,11 +7,13 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { Plus, User } from 'lucide-react';
 import { PageProps } from '@/types';
+import { formatDMChannelName, ChannelType } from '@/lib/utils';
 
 interface Channel {
     id: number;
     name: string;
     users_count: number;
+    channel_type: number;
 }
 
 interface Props extends PropsWithChildren {
@@ -25,6 +27,10 @@ export default function Authenticated({
     currentChannel,
 }: Props) {
     const { props } = usePage<PageProps>();
+    
+    // Separate channels by type
+    const regularChannels = channels.filter(c => c.channel_type !== ChannelType.Direct);
+    const directMessages = channels.filter(c => c.channel_type === ChannelType.Direct);
 
     return (
         <div className="flex h-screen bg-gray-100 dark:bg-gray-900">
@@ -77,7 +83,7 @@ export default function Authenticated({
                                 Channels
                             </h2>
                             <div className="space-y-1">
-                                {channels.map((channel) => (
+                                {regularChannels.map((channel) => (
                                     <Button
                                         key={channel.id}
                                         variant={channel.id === currentChannel?.id ? "secondary" : "ghost"}
@@ -107,6 +113,18 @@ export default function Authenticated({
                                 Direct Messages
                             </h2>
                             <div className="space-y-1">
+                                {directMessages.map((channel) => (
+                                    <Button
+                                        key={channel.id}
+                                        variant={channel.id === currentChannel?.id ? "secondary" : "ghost"}
+                                        className="w-full justify-start"
+                                        asChild
+                                    >
+                                        <Link href={route('channels.show', channel.id)}>
+                                            {formatDMChannelName(channel.name, props.auth.user.name)}
+                                        </Link>
+                                    </Button>
+                                ))}
                                 <Button
                                     variant="ghost"
                                     className="w-full justify-start text-muted-foreground"

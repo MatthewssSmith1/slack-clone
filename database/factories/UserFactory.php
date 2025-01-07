@@ -18,7 +18,7 @@ class UserFactory extends Factory
     {
         return [
             'name' => fake()->name(),
-            'email' => chr(97 + static::$emailCounter++) . '@example.com',
+            'email' => chr(97 + static::$emailCounter++) . '@gauntletai.com',
             'email_verified_at' => now(),
             'password' => static::$password ??= Hash::make('password'),
             'profile_picture' => null,
