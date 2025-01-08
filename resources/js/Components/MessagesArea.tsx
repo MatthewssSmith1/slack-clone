@@ -1,14 +1,9 @@
 import { useRef, useEffect } from 'react';
 import { User as UserIcon } from 'lucide-react';
 import { useMessageStore } from '@/stores/messageStore';
-import type { Message } from '@/lib/utils';
 
-interface Props {
-    currentUserId: number;
-}
-
-export default function MessagesArea({ currentUserId }: Props) {
-    const { localMessages, showNewMessageIndicator, hideNewMessageIndicator } = useMessageStore();
+export default function MessagesArea() {
+    const { localMessages, hideNewMsgIndicator } = useMessageStore();
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const messagesContainerRef = useRef<HTMLDivElement>(null);
 
@@ -24,7 +19,7 @@ export default function MessagesArea({ currentUserId }: Props) {
     useEffect(() => {
         if (shouldScrollToBottom()) {
             messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-            hideNewMessageIndicator();
+            hideNewMsgIndicator();
         }
     }, [localMessages]);
 
@@ -43,7 +38,7 @@ export default function MessagesArea({ currentUserId }: Props) {
                         <div className="flex-1">
                             <div className="flex items-center gap-2">
                                 <span className="font-medium">{message.user.name}</span>
-                                <span className="text-xs mt-[1px] text-muted-foreground">
+                                <span className="text-xs mt-[1px] text-muted-foreground select-none">
                                     {new Date(message.created_at).toLocaleTimeString([], { 
                                         hour: 'numeric', 
                                         minute: '2-digit'

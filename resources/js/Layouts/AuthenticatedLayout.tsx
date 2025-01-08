@@ -1,20 +1,13 @@
-import ApplicationLogo from '@/Components/ApplicationLogo';
-import Dropdown from '@/Components/Dropdown';
-import { Link, usePage } from '@inertiajs/react';
+import { formatDMChannelName } from '@/lib/utils';
 import { PropsWithChildren } from 'react';
-import { Button } from '@/components/ui/button';
+import { Link, usePage } from '@inertiajs/react';
+import { ChannelType } from '@/lib/constants';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Separator } from '@/components/ui/separator';
 import { Plus, User } from 'lucide-react';
+import { Separator } from '@/components/ui/separator';
 import { PageProps } from '@/types';
-import { formatDMChannelName, ChannelType } from '@/lib/utils';
-
-interface Channel {
-    id: number;
-    name: string;
-    users_count: number;
-    channel_type: number;
-}
+import { Button } from '@/components/ui/button';
+import Dropdown from '@/Components/Dropdown';
 
 interface Props extends PropsWithChildren {
     channels?: Channel[];

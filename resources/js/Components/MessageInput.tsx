@@ -1,9 +1,11 @@
-import { Bold, Italic, Underline, Code, Link as LinkIcon, Send, Plus, ChevronDown } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
+import { Bold, Italic, ALargeSmall, Code, Link as LinkIcon, Send, Plus, ChevronDown, Strikethrough, List, ListOrdered, Quote, CodeSquare } from 'lucide-react';
 import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
-import { ChannelType, type Channel } from '@/lib/utils';
 import { useMessageStore } from '@/stores/messageStore';
+import { ChannelType } from '@/lib/constants';
+import { Textarea } from '@/components/ui/textarea';
+import { Button } from '@/components/ui/button';
+import { Separator } from '@/components/ui/separator';
+import { useState } from 'react';
 
 interface Props {
     currentChannel: Channel;
@@ -14,7 +16,8 @@ export default function MessageInput({
     currentChannel,
     currentUserName,
 }: Props) {
-    const { message, isSubmitting, setMessage, sendMessage, showNewMessageIndicator, hideNewMessageIndicator } = useMessageStore();
+    const { message, isSubmitting, setMessage, sendMessage, showNewMsgIndicator, hideNewMsgIndicator } = useMessageStore();
+    const [showRichText, setShowRichText] = useState(true);
 
     const onKeyDown = (e: React.KeyboardEvent) => {
         if (e.key !== 'Enter' || e.shiftKey) return;
@@ -33,12 +36,12 @@ export default function MessageInput({
 
     return (
         <div className="bg-background m-4 mt-0 rounded-md relative">
-            {showNewMessageIndicator && (
+            {showNewMsgIndicator && (
                 <div 
                     onClick={() => {
                         const messagesEnd = document.getElementById('messages-end');
                         messagesEnd?.scrollIntoView({ behavior: 'smooth' });
-                        hideNewMessageIndicator();
+                        hideNewMsgIndicator();
                     }}
                     className="absolute -top-10 left-1/2 -translate-x-1/2 px-3 py-1.5 bg-primary/70 text-primary-foreground rounded-full text-sm animate-in fade-in cursor-pointer hover:bg-primary/90 flex items-center gap-1.5 shadow-md"
                 >
@@ -54,28 +57,21 @@ export default function MessageInput({
                 className="border border-border rounded-md bg-card"
             >
                 {/* Top Button Row */}
-                <div className="flex gap-2 p-2">
-                    <Button type="button" variant="ghost" size="sm" className="h-8 w-8 p-0">
-                        <Bold className="h-4 w-4" />
-                        <span className="sr-only">Bold</span>
-                    </Button>
-                    <Button type="button" variant="ghost" size="sm" className="h-8 w-8 p-0">
-                        <Italic className="h-4 w-4" />
-                        <span className="sr-only">Italic</span>
-                    </Button>
-                    <Button type="button" variant="ghost" size="sm" className="h-8 w-8 p-0">
-                        <Underline className="h-4 w-4" />
-                        <span className="sr-only">Underline</span>
-                    </Button>
-                    <Button type="button" variant="ghost" size="sm" className="h-8 w-8 p-0">
-                        <Code className="h-4 w-4" />
-                        <span className="sr-only">Code</span>
-                    </Button>
-                    <Button type="button" variant="ghost" size="sm" className="h-8 w-8 p-0">
-                        <LinkIcon className="h-4 w-4" />
-                        <span className="sr-only">Link</span>
-                    </Button>
-                </div>
+                {showRichText && (
+                    <div className="flex items-center gap-1 p-2 [&>button]:h-8 [&>button]:w-8 [&>button]:p-0 [&_svg]:h-4 [&_svg]:w-4">
+                        <Button type="button" variant="ghost" size="sm" aria-label="Bold">           <Bold />          </Button>
+                        <Button type="button" variant="ghost" size="sm" aria-label="Italic">         <Italic />        </Button>
+                        <Button type="button" variant="ghost" size="sm" aria-label="Strikethrough">  <Strikethrough /> </Button>
+                        <Separator orientation="vertical" className="h-5 mx-1" />
+                        <Button type="button" variant="ghost" size="sm" aria-label="Link">           <LinkIcon />      </Button>
+                        <Button type="button" variant="ghost" size="sm" aria-label="Ordered List">   <ListOrdered />   </Button>
+                        <Button type="button" variant="ghost" size="sm" aria-label="Unordered List"> <List />          </Button>
+                        <Separator orientation="vertical" className="h-5 mx-1" />
+                        <Button type="button" variant="ghost" size="sm" aria-label="Block Quote">    <Quote />         </Button>
+                        <Button type="button" variant="ghost" size="sm" aria-label="Code">           <Code />          </Button>
+                        <Button type="button" variant="ghost" size="sm" aria-label="Code Square">    <CodeSquare />    </Button>
+                    </div>
+                )}
 
                 {/* Textarea */}
                 <Textarea 
@@ -87,7 +83,7 @@ export default function MessageInput({
                 />
 
                 {/* Bottom Button Row */}
-                <div className="flex justify-between p-2">
+                <div className="flex p-2">
                     <TooltipProvider>
                         <Tooltip>
                             <TooltipTrigger asChild>
@@ -106,6 +102,26 @@ export default function MessageInput({
                             </TooltipContent>
                         </Tooltip>
                     </TooltipProvider>
+                    <TooltipProvider>
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <Button 
+                                    type="button" 
+                                    size="sm"
+                                    variant="ghost"
+                                    className="h-8 w-8 p-0"
+                                    onClick={() => setShowRichText(!showRichText)}
+                                >
+                                    <ALargeSmall className="h-4 w-4" />
+                                    <span className="sr-only">Hide/Show Formatting</span>
+                                </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                                <p>{showRichText ? 'Hide' : 'Show'} Formatting</p>
+                            </TooltipContent>
+                        </Tooltip>
+                    </TooltipProvider>
+                    <div className="grow" />
                     <TooltipProvider>
                         <Tooltip>
                             <TooltipTrigger asChild>

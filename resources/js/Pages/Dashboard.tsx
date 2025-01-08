@@ -1,5 +1,4 @@
-import { formatDMChannelName, ChannelType } from '@/lib/utils';
-import type { Message, Channel } from '@/lib/utils';
+import { formatDMChannelName } from '@/lib/utils';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { useMessageStore } from '@/stores/messageStore';
 import type { PageProps } from '@/types';
@@ -8,6 +7,7 @@ import MessagesArea from '@/Components/MessagesArea';
 import { UsersIcon } from 'lucide-react';
 import { useEffect } from 'react';
 import { Head } from '@inertiajs/react';
+import { ChannelType } from '@/lib/constants';
 
 interface Props extends PageProps<{ 
     channels: Channel[];
@@ -16,7 +16,6 @@ interface Props extends PageProps<{
 
 export default function Dashboard({ channels, currentChannel, auth }: Props) {
     const { 
-        localMessages, 
         setLocalMessages, 
         addMessage
     } = useMessageStore();
@@ -69,7 +68,7 @@ export default function Dashboard({ channels, currentChannel, auth }: Props) {
                     </div>
                 </div>
 
-                <MessagesArea currentUserId={auth.user.id} />
+                <MessagesArea />
 
                 <MessageInput 
                     currentChannel={currentChannel}

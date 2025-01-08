@@ -15,7 +15,7 @@ class MessageFactory extends Factory
             'user_id' => null,
             'channel_id' => null,
             'parent_id' => null,
-            'content' => fake()->realText(rand(20, 200)),
+            'content' => fake()->realText(rand(15, 125)),
             'created_at' => fake()->dateTimeBetween('-1 month'),
             'updated_at' => fn (array $attributes) => $attributes['created_at'],
         ];

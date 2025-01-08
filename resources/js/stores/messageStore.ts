@@ -1,4 +1,4 @@
-import { create, type StateCreator } from 'zustand';
+import { create } from 'zustand';
 import { Message } from '@/lib/utils';
 import axios from 'axios';
 
@@ -6,11 +6,11 @@ interface MessageState {
     message: string;
     isSubmitting: boolean;
     localMessages: Message[];
-    showNewMessageIndicator: boolean;
+    showNewMsgIndicator: boolean;
     setMessage: (message: string) => void;
     setLocalMessages: (messages: Message[]) => void;
     addMessage: (message: Message, shouldScroll: boolean) => void;
-    hideNewMessageIndicator: () => void;
+    hideNewMsgIndicator: () => void;
     sendMessage: (channelId: number) => Promise<void>;
 }
 
@@ -18,27 +18,26 @@ export const useMessageStore = create<MessageState>((set, get): MessageState => 
     message: '',
     isSubmitting: false,
     localMessages: [],
-    showNewMessageIndicator: false,
+    showNewMsgIndicator: false,
     
     setMessage: (message: string) => set({ message }),
     
     setLocalMessages: (messages: Message[]) => set({ 
         localMessages: [...messages].reverse(),
-        showNewMessageIndicator: false 
+        showNewMsgIndicator: false 
     }),
     
-    hideNewMessageIndicator: () => set({ showNewMessageIndicator: false }),
+    hideNewMsgIndicator: () => set({ showNewMsgIndicator: false }),
     
     addMessage: (message: Message, shouldScroll: boolean) => {
         set((state: MessageState) => ({ 
             localMessages: [message, ...state.localMessages],
-            showNewMessageIndicator: !shouldScroll
+            showNewMsgIndicator: !shouldScroll
         }));
 
-        // Hide indicator after 3 seconds if it was shown
         if (!shouldScroll) {
             setTimeout(() => {
-                get().hideNewMessageIndicator();
+                get().hideNewMsgIndicator();
             }, 3000);
         }
     },
@@ -54,7 +53,6 @@ export const useMessageStore = create<MessageState>((set, get): MessageState => 
                 { content: message }
             );
 
-            // When sending our own message, we always want to scroll
             get().addMessage(response.data, true);
             set({ message: '', isSubmitting: false });
         } catch (error) {
