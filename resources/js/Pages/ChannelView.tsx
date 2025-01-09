@@ -5,21 +5,21 @@ import MessagesArea from '@/Components/MessagesArea';
 import MainHeader from '@/Components/MainHeader';
 import Dashboard from '@/Layouts/Dashboard';
 
-type Params = {
+type Props = {
     channel?: string;
 };
 
-export default function ChannelView({ params }: { params: Params }) {
+export default function ChannelView({ channel }: Props) {
     const { fetch: fetchChannels, setCurrentChannel } = useChannelStore();
-    const channelId = params?.channel;
 
     useEffect(() => {
+        // Initial load - fetch channels and set current if specified in URL
         fetchChannels().then(() => {
-            if (channelId) {
-                setCurrentChannel(Number(channelId));
+            if (channel) {
+                setCurrentChannel(Number(channel));
             }
         });
-    }, [channelId]);
+    }, []); // Only run on mount
 
     return (
         <Dashboard>

@@ -1,3 +1,4 @@
+import { Channel } from '@/types/slack';
 import { create } from 'zustand';
 import axios from 'axios';
 
@@ -7,8 +8,8 @@ interface ChannelStore {
     isLoading: boolean;
     error: string | null;
     fetch: () => Promise<void>;
-    setCurrentChannel: (channelId: number) => void;
     addChannel: (channel: Channel) => void;
+    setCurrentChannel: (channelId: number) => void;
     updateChannel: (channelId: number, updates: Partial<Channel>) => void;
     removeChannel: (channelId: number) => void;
 }
@@ -22,7 +23,6 @@ export const useChannelStore = create<ChannelStore>((set, get) => ({
     fetch: async () => {
         console.log('fetching channels');
         const currentState = get();
-        // Don't fetch if we're already loading
         if (currentState.isLoading) return;
         
         set({ isLoading: true, error: null });
@@ -30,15 +30,18 @@ export const useChannelStore = create<ChannelStore>((set, get) => ({
             const response = await axios.get<{ channels: Channel[] }>('/channels');
             const channels = response.data.channels;
             
-            // Preserve current channel if it exists in new channel list
-            const currentChannel = currentState.currentChannel;
-            const updatedCurrentChannel = currentChannel
-                ? channels.find(c => c.id === currentChannel.id) || channels[0] || null
-                : channels[0] || null;
+            // Get channel ID from URL or use first channel
+            const urlParams = new URLSearchParams(window.location.search);
+            const channelId = parseInt(urlParams.get('channel') || '0');
+            const currentChannel = channels.find(c => c.id === channelId) || channels[0] || null;
+
+            if (!urlParams.has('channel') && currentChannel) 
+                window.history.replaceState({}, '', `/dashboard?channel=${currentChannel.id}`);
+           
 
             set({ 
                 channels,
-                currentChannel: updatedCurrentChannel,
+                currentChannel,
                 isLoading: false 
             });
         } catch (error) {
@@ -54,6 +57,8 @@ export const useChannelStore = create<ChannelStore>((set, get) => ({
         const channel = get().channels.find(c => c.id === channelId);
         if (channel) {
             set({ currentChannel: channel });
+            // Update URL silently without page reload
+            window.history.replaceState({}, '', `/dashboard?channel=${channelId}`);
         }
     },
 

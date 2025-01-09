@@ -1,13 +1,8 @@
+import { useChannelMessages } from '@/hooks/use-channel-messages';
 import { useRef, useEffect } from 'react';
-import { User as UserIcon } from 'lucide-react';
 import { useMessageStore } from '@/stores/messageStore';
 import { useChannelStore } from '@/stores/channelStore';
-import { useChannelMessages } from '@/hooks/use-channel-messages';
-
-const TIME_FORMAT_OPTIONS: Intl.DateTimeFormatOptions = {
-    hour: 'numeric',
-    minute: '2-digit'
-};
+import MessageView from './MessageView';
 
 export default function MessagesArea() {
     const { currentChannel } = useChannelStore();
@@ -35,20 +30,7 @@ export default function MessagesArea() {
             <div className="flex flex-col-reverse gap-[1px]">
                 <div ref={messagesEndRef} id="messages-end" />
                 {localMessages.map((message) => (
-                    <div key={message.id} className="flex items-start gap-3 px-4 py-1 group hover:bg-background">
-                        <div className="w-8 h-8 mt-1.5 rounded-full bg-muted flex items-center justify-center">
-                            <UserIcon className="h-4 w-4 text-muted-foreground" />
-                        </div>
-                        <div className="flex-1">
-                            <div className="flex items-center gap-2">
-                                <span className="font-medium">{message.user.name}</span>
-                                <span className="text-xs mt-[1px] text-muted-foreground select-none">
-                                    {new Date(message.created_at).toLocaleTimeString([], TIME_FORMAT_OPTIONS)}
-                                </span>
-                            </div>
-                            <p className="text-sm text-foreground">{message.content}</p>
-                        </div>
-                    </div>
+                    <MessageView key={message.id} message={message} />
                 ))}
             </div>
         </div>
