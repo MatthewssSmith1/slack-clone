@@ -1,4 +1,4 @@
-import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import Dashboard from '@/Layouts/Dashboard';
 import { PageProps } from '@/types';
 import { Head } from '@inertiajs/react';
 import DeleteUserForm from './Partials/DeleteUserForm';
@@ -10,7 +10,7 @@ export default function Edit({
     status,
 }: PageProps<{ mustVerifyEmail: boolean; status?: string }>) {
     return (
-        <AuthenticatedLayout>
+        <Dashboard>
             <Head title="Profile" />
 
             <div className="py-6">
@@ -40,6 +40,6 @@ export default function Edit({
                     </div>
                 </div>
             </div>
-        </AuthenticatedLayout>
+        </Dashboard>
     );
 }

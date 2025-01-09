@@ -1,19 +1,23 @@
 import { useRef, useEffect } from 'react';
 import { User as UserIcon } from 'lucide-react';
 import { useMessageStore } from '@/stores/messageStore';
+import { useChannelStore } from '@/stores/channelStore';
+import { useChannelMessages } from '@/hooks/use-channel-messages';
+
+const TIME_FORMAT_OPTIONS: Intl.DateTimeFormatOptions = {
+    hour: 'numeric',
+    minute: '2-digit'
+};
 
 export default function MessagesArea() {
+    const { currentChannel } = useChannelStore();
     const { localMessages, hideNewMsgIndicator } = useMessageStore();
+    useChannelMessages(currentChannel);
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const messagesContainerRef = useRef<HTMLDivElement>(null);
 
-    const shouldScrollToBottom = () => {
-        const container = messagesContainerRef.current;
-        if (!container) return false;
-        
-        const threshold = 100; // pixels from top (since container is reversed)
-        return container.scrollTop > -threshold;
-    };
+    // pixels from top because 'flex-col-reverse' below changes scroll direction
+    const shouldScrollToBottom = () => (messagesContainerRef.current?.scrollTop ?? 0) > -100;
 
     // Handle scroll behavior for new messages
     useEffect(() => {
@@ -39,10 +43,7 @@ export default function MessagesArea() {
                             <div className="flex items-center gap-2">
                                 <span className="font-medium">{message.user.name}</span>
                                 <span className="text-xs mt-[1px] text-muted-foreground select-none">
-                                    {new Date(message.created_at).toLocaleTimeString([], { 
-                                        hour: 'numeric', 
-                                        minute: '2-digit'
-                                    })}
+                                    {new Date(message.created_at).toLocaleTimeString([], TIME_FORMAT_OPTIONS)}
                                 </span>
                             </div>
                             <p className="text-sm text-foreground">{message.content}</p>

@@ -6,18 +6,15 @@ import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { useState } from 'react';
+import { useAuth } from '@/hooks/use-auth';
+import { useChannelStore } from '@/stores/channelStore';
 
-interface Props {
-    currentChannel: Channel;
-    currentUserName: string;
-}
-
-export default function MessageInput({ 
-    currentChannel,
-    currentUserName,
-}: Props) {
+export default function MessageInput() {
     const { message, isSubmitting, setMessage, sendMessage, showNewMsgIndicator, hideNewMsgIndicator } = useMessageStore();
-    const [showRichText, setShowRichText] = useState(true);
+    const [showRichText, setShowRichText] = useState(false);
+    const { user } = useAuth();
+    const { currentChannel } = useChannelStore();
+    if (!currentChannel) return null;
 
     const onKeyDown = (e: React.KeyboardEvent) => {
         if (e.key !== 'Enter' || e.shiftKey) return;
@@ -28,7 +25,7 @@ export default function MessageInput({
 
     const getPlaceholder = () => {
         if (currentChannel.channel_type === ChannelType.Direct) {
-            const otherUsers = currentChannel.name.split(', ').filter(name => name !== currentUserName);
+            const otherUsers = currentChannel.name.split(', ').filter(name => name !== user.name);
             return `Message ${otherUsers.join(', ')}`;
         }
         return `Message #${currentChannel.name}`;
@@ -79,7 +76,7 @@ export default function MessageInput({
                     onChange={(e) => setMessage(e.target.value)}
                     onKeyDown={onKeyDown}
                     placeholder={getPlaceholder()}
-                    className="min-h-[100px] resize-none border-0 focus-visible:ring-0 rounded-none px-3 py-2"
+                    className="min-h-[100px] resize-none border-0 focus-visible:ring-0 rounded-none px-3 py-[10px]"
                 />
 
                 {/* Bottom Button Row */}

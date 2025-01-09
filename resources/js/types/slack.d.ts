@@ -1,7 +1,8 @@
 declare interface User {
     id: number;
     name: string;
-    profile_picture: string | null;
+    email: string;
+    profile_picture?: string | null;
 }
 
 declare interface Message {

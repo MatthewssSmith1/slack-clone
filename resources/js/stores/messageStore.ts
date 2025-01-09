@@ -1,5 +1,4 @@
 import { create } from 'zustand';
-import { Message } from '@/lib/utils';
 import axios from 'axios';
 
 interface MessageState {

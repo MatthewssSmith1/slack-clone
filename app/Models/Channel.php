@@ -2,8 +2,8 @@
 
 namespace App\Models;
 
-use App\Enums\ChannelType;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -14,23 +14,30 @@ class Channel extends Model
 
     protected $fillable = [
         'name',
-        'description',
         'channel_type',
+        'description',
+        'created_by',
     ];
 
     protected $casts = [
-        'channel_type' => ChannelType::class,
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime',
     ];
+
+    public function creator(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'created_by');
+    }
 
     public function users(): BelongsToMany
     {
         return $this->belongsToMany(User::class)
-            ->withTimestamps()
-            ->withPivot(['role']);
+            ->withTimestamps();
     }
 
     public function messages(): HasMany
     {
-        return $this->hasMany(Message::class);
+        return $this->hasMany(Message::class)
+            ->orderBy('created_at', 'asc');
     }
 }

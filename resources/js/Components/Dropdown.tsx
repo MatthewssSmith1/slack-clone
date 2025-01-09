@@ -1,12 +1,13 @@
 import { Transition } from '@headlessui/react';
 import { InertiaLinkProps, Link } from '@inertiajs/react';
-import {
+import React, {
     createContext,
     Dispatch,
     PropsWithChildren,
     SetStateAction,
     useContext,
     useState,
+    ElementType,
 } from 'react';
 
 const DropDownContext = createContext<{
@@ -19,8 +20,20 @@ const DropDownContext = createContext<{
     toggleOpen: () => {},
 });
 
-const Dropdown = ({ children }: PropsWithChildren) => {
+type DropdownProps<T extends ElementType = 'div'> = {
+    as?: T;
+    className?: string;
+    children: React.ReactNode;
+} & React.ComponentPropsWithoutRef<T>;
+
+const Dropdown = <T extends ElementType = 'div'>({ 
+    as,
+    children, 
+    className = '',
+    ...props
+}: DropdownProps<T>) => {
     const [open, setOpen] = useState(false);
+    const Component = as || 'div';
 
     const toggleOpen = () => {
         setOpen((previousState) => !previousState);
@@ -28,17 +41,17 @@ const Dropdown = ({ children }: PropsWithChildren) => {
 
     return (
         <DropDownContext.Provider value={{ open, setOpen, toggleOpen }}>
-            <div className="relative">{children}</div>
+            <Component className={`relative ${className}`} {...props}>{children}</Component>
         </DropDownContext.Provider>
     );
 };
 
-const Trigger = ({ children }: PropsWithChildren) => {
+const Trigger = ({ children, className = '' }: PropsWithChildren<{ className?: string }>) => {
     const { open, setOpen, toggleOpen } = useContext(DropDownContext);
 
     return (
         <>
-            <div onClick={toggleOpen}>{children}</div>
+            <div onClick={toggleOpen} className={className}>{children}</div>
 
             {open && (
                 <div

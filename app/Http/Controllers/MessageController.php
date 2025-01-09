@@ -14,7 +14,7 @@ class MessageController extends Controller
 
     public function store(Request $request, Channel $channel)
     {
-        $this->authorize('view', $channel);
+        // $this->authorize('view', $channel);
         
         $validated = $request->validate([
             'content' => ['required', 'string', 'max:2000'],

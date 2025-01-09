@@ -3,45 +3,100 @@
 namespace App\Http\Controllers;
 
 use App\Models\Channel;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Inertia\Inertia;
-use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
+use Illuminate\Support\Facades\Auth;
 
 class ChannelController extends Controller
 {
-    use AuthorizesRequests;
-
-    public function index()
+    public function index(): JsonResponse
     {
-        $user = auth()->user();
-        
-        $channels = $user->channels()
+        $channels = Auth::user()
+            ->channels()
             ->withCount('users')
-            ->with(['messages' => function ($query) {
-                $query->with('user:id,name,profile_picture')
-                    ->orderBy('created_at', 'asc')
-                    ->limit(50);
-            }])
+            ->with(['messages.user', 'users'])
+            ->orderBy('name')
             ->get();
 
-        return Inertia::render('Dashboard', [
-            'channels' => $channels,
-            'currentChannel' => $channels->first(),
+        return response()->json([
+            'channels' => $channels
         ]);
     }
 
-    public function show(Channel $channel)
+    public function store(Request $request): JsonResponse
     {
-        $this->authorize('view', $channel);
-
-        return Inertia::render('Dashboard', [
-            'channels' => auth()->user()->channels()->withCount('users')->get(),
-            'currentChannel' => $channel->loadCount('users')->load([
-                'messages' => fn($query) => $query
-                    ->with('user:id,name,profile_picture')
-                    ->orderBy('created_at', 'asc')
-                    ->limit(50)
-            ]),
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'channel_type' => ['required', 'string', 'in:public,direct'],
+            'description' => ['nullable', 'string', 'max:1000'],
+            'user_ids' => ['required_if:channel_type,direct', 'array'],
+            'user_ids.*' => ['exists:users,id']
         ]);
+
+        $channel = Channel::create([
+            'name' => $validated['name'],
+            'channel_type' => $validated['channel_type'],
+            'description' => $validated['description'] ?? null,
+            'created_by' => Auth::id()
+        ]);
+
+        if (isset($validated['user_ids'])) {
+            $channel->users()->attach($validated['user_ids']);
+        }
+
+        // Always add the creator to the channel
+        $channel->users()->syncWithoutDetaching([Auth::id()]);
+
+        return response()->json([
+            'channel' => $channel->loadCount('users')->load(['messages.user', 'users'])
+        ], 201);
+    }
+
+    public function show(Channel $channel): JsonResponse
+    {
+        if (!$channel->users()->where('user_id', Auth::id())->exists()) {
+            abort(403, 'You do not have access to this channel.');
+        }
+
+        return response()->json([
+            'channel' => $channel->loadCount('users')->load(['messages.user', 'users'])
+        ]);
+    }
+
+    public function update(Request $request, Channel $channel): JsonResponse
+    {
+        // $this->authorize('update', $channel);
+
+        $validated = $request->validate([
+            'name' => ['sometimes', 'string', 'max:255'],
+            'description' => ['nullable', 'string', 'max:1000'],
+        ]);
+
+        $channel->update($validated);
+
+        return response()->json([
+            'channel' => $channel->fresh(['messages.user', 'users'])
+        ]);
+    }
+
+    public function destroy(Channel $channel): JsonResponse
+    {
+        // $this->authorize('delete', $channel);
+
+        $channel->delete();
+
+        return response()->json([], 204);
+    }
+
+    public function redirectToFirstChannel()
+    {
+        $user = Auth::user();
+        $firstChannel = $user->channels()->first();
+
+        if ($firstChannel) {
+            return redirect()->route('channels.show', ['channel' => $firstChannel->id]);
+        }
+
+        return redirect()->route('dashboard'); // Fallback if no channel is found
     }
 } 
