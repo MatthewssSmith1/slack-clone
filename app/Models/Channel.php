@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use App\Enums\ChannelType;
 
 class Channel extends Model
 {
@@ -22,7 +23,10 @@ class Channel extends Model
     protected $casts = [
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
+        'channel_type' => ChannelType::class,
     ];
+
+    protected $withCount = ['users'];
 
     public function creator(): BelongsTo
     {

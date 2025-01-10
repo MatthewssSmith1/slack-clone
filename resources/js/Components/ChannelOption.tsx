@@ -1,6 +1,6 @@
-import { cn, formatDMChannelName } from '@/lib/utils';
+import { cn, formatDMChannelName, ChannelType } from '@/lib/utils';
 import { useChannelStore } from '@/stores/channelStore';
-import { ChannelType } from '@/lib/constants';
+import type { Channel } from '@/types/slack';
 import { Button } from '@/components/ui/button';
 
 interface Props {

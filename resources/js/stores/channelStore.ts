@@ -1,5 +1,5 @@
 import { Channel } from '@/types/slack';
-import { create } from 'zustand';
+import { create, StateCreator } from 'zustand';
 import axios from 'axios';
 
 interface ChannelStore {
@@ -14,7 +14,7 @@ interface ChannelStore {
     removeChannel: (channelId: number) => void;
 }
 
-export const useChannelStore = create<ChannelStore>((set, get) => ({
+const storeCreator: StateCreator<ChannelStore> = (set, get) => ({
     channels: [],
     currentChannel: null,
     isLoading: false,
@@ -37,7 +37,6 @@ export const useChannelStore = create<ChannelStore>((set, get) => ({
 
             if (!urlParams.has('channel') && currentChannel) 
                 window.history.replaceState({}, '', `/dashboard?channel=${currentChannel.id}`);
-           
 
             set({ 
                 channels,
@@ -45,11 +44,7 @@ export const useChannelStore = create<ChannelStore>((set, get) => ({
                 isLoading: false 
             });
         } catch (error) {
-            set(state => ({ 
-                ...state,
-                error: 'Failed to fetch channels',
-                isLoading: false 
-            }));
+            set(state => ({ ...state, error: 'Failed to fetch channels', isLoading: false }));
         }
     },
 
@@ -81,5 +76,7 @@ export const useChannelStore = create<ChannelStore>((set, get) => ({
             channels: state.channels.filter(c => c.id !== channelId),
             currentChannel: state.currentChannel?.id === channelId ? state.channels[0] || null : state.currentChannel
         }));
-    }
-})); 
+    },
+});
+
+export const useChannelStore = create<ChannelStore>(storeCreator); 

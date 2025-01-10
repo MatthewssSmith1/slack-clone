@@ -1,5 +1,5 @@
 import { UsersIcon } from 'lucide-react';
-import { ChannelType } from '@/lib/constants';
+import { ChannelType } from '@/lib/utils';
 import { formatDMChannelName } from '@/lib/utils';
 import { Head } from '@inertiajs/react';
 import { useAuth } from '@/hooks/use-auth';

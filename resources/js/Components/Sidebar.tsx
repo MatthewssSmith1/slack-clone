@@ -1,4 +1,4 @@
-import { ChannelType } from '@/lib/constants';
+import { ChannelType } from '@/lib/utils';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import SidebarSection from '@/Components/SidebarSection';
 

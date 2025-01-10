@@ -1,13 +1,13 @@
 import { Bold, Italic, ALargeSmall, Code, Link as LinkIcon, Send, Plus, ChevronDown, Strikethrough, List, ListOrdered, Quote, CodeSquare } from 'lucide-react';
 import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import { useMessageStore } from '@/stores/messageStore';
-import { ChannelType } from '@/lib/constants';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { useState } from 'react';
 import { useAuth } from '@/hooks/use-auth';
 import { useChannelStore } from '@/stores/channelStore';
+import { ChannelType } from '@/lib/utils';
 
 export default function MessageInput() {
     const { message, isSubmitting, setMessage, sendMessage, showNewMsgIndicator, hideNewMsgIndicator } = useMessageStore();

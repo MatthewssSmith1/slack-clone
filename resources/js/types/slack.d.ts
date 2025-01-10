@@ -1,3 +1,5 @@
+import { ChannelType } from '@/lib/utils';
+
 export interface User {
     id: number;
     name: string;
@@ -15,9 +17,10 @@ export interface Message {
 export interface Channel {
     id: number;
     name: string;
-    users_count: number;
+    description: string | null;
     channel_type: ChannelType;
-    messages: Message[];
-}
-
-export type ChannelType = 'public' | 'private' | 'direct'; 
+    created_at: string;
+    updated_at: string;
+    users: User[];
+    users_count: number;
+} 

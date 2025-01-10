@@ -8,7 +8,7 @@ export default function SidebarHeader() {
     return (
         <Dropdown className="col-start-1 row-start-1 px-2 py-1 border-b border-r border-border bg-card">
             <Dropdown.Trigger className="flex items-center justify-between h-full">
-                <button className="my-auto flex items-center w-full text-left rounded-md hover:bg-muted/50 p-2">
+                <button className="my-auto flex items-center w-full text-left rounded-md hover:bg-muted/50 py-2 pl-2 pr-3">
                     <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center me-2">
                         <User className="h-4 w-4 text-muted-foreground" />
                     </div>

@@ -3,7 +3,7 @@ import { useChannelStore } from '@/stores/channelStore';
 import MessageInput from '@/Components/MessageInput';
 import MessagesArea from '@/Components/MessagesArea';
 import MainHeader from '@/Components/MainHeader';
-import Dashboard from '@/Layouts/Dashboard';
+import AuthLayout from '@/Layouts/AuthLayout';
 
 type Props = {
     channel?: string;
@@ -22,7 +22,7 @@ export default function ChannelView({ channel }: Props) {
     }, []); // Only run on mount
 
     return (
-        <Dashboard>
+        <AuthLayout>
             <Suspense fallback={<div>Loading...</div>}>
                 <MainHeader />
             </Suspense>
@@ -32,6 +32,6 @@ export default function ChannelView({ channel }: Props) {
                 </Suspense>
                 <MessageInput />
             </main>
-        </Dashboard>
+        </AuthLayout>
     );
 }

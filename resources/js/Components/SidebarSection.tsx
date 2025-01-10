@@ -1,4 +1,4 @@
-import { ChannelType } from '@/lib/constants';
+import { ChannelType } from '@/lib/utils';
 import { cn } from '@/lib/utils';
 import { Plus, Settings, Check, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -46,7 +46,7 @@ function DropdownMenu({ addButtonText }: { addButtonText: string; }) {
     const buttonClassName = "w-full justify-start h-auto px-4 py-2 font-normal";
 
     return (
-        <Dropdown.Content align="left" width="48" contentClasses="py-1 bg-card [&_svg]:mr-2 [&_svg]:size-4">
+        <Dropdown.Content align="right" width="48" contentClasses="py-1 bg-card [&_svg]:mr-2 [&_svg]:size-4">
             <Button variant="ghost" disabled className={buttonClassName}><Plus />{addButtonText}</Button>
             <Button variant="ghost" disabled className={buttonClassName}><Settings />Manage</Button>
             <Button variant="ghost" disabled className={buttonClassName}><Check />Mark all as read</Button>
