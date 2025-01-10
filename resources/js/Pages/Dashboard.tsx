@@ -5,21 +5,14 @@ import MessagesArea from '@/Components/MessagesArea';
 import MainHeader from '@/Components/MainHeader';
 import AuthLayout from '@/Layouts/AuthLayout';
 
-type Props = {
-    channel?: string;
-};
-
-export default function ChannelView({ channel }: Props) {
-    const { fetch: fetchChannels, setCurrentChannel } = useChannelStore();
+export default function Dashboard({ channel }: { channel?: string }) {
+    const { fetchChannels, setCurrentChannel } = useChannelStore();
 
     useEffect(() => {
-        // Initial load - fetch channels and set current if specified in URL
         fetchChannels().then(() => {
-            if (channel) {
-                setCurrentChannel(Number(channel));
-            }
+            if (channel) setCurrentChannel(Number(channel));
         });
-    }, []); // Only run on mount
+    }, []);
 
     return (
         <AuthLayout>
@@ -34,4 +27,4 @@ export default function ChannelView({ channel }: Props) {
             </main>
         </AuthLayout>
     );
-}
+} 

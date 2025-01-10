@@ -23,4 +23,5 @@ export interface Channel {
     updated_at: string;
     users: User[];
     users_count: number;
+    messages: Message[];
 } 

@@ -7,7 +7,7 @@ interface ChannelStore {
     currentChannel: Channel | null;
     isLoading: boolean;
     error: string | null;
-    fetch: () => Promise<void>;
+    fetchChannels: () => Promise<void>;
     addChannel: (channel: Channel) => void;
     setCurrentChannel: (channelId: number) => void;
     updateChannel: (channelId: number, updates: Partial<Channel>) => void;
@@ -20,7 +20,7 @@ const storeCreator: StateCreator<ChannelStore> = (set, get) => ({
     isLoading: false,
     error: null,
 
-    fetch: async () => {
+    fetchChannels: async () => {
         console.log('fetching channels');
         const currentState = get();
         if (currentState.isLoading) return;

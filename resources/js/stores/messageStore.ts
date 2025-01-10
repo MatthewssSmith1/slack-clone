@@ -1,3 +1,4 @@
+import { Message } from '@/types/slack';
 import { create } from 'zustand';
 import axios from 'axios';
 

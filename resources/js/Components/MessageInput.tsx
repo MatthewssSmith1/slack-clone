@@ -32,7 +32,7 @@ export default function MessageInput() {
     };
 
     return (
-        <div className="bg-background m-4 mt-0 rounded-md relative">
+        <div className="bg-background m-4 mt-0 rounded-md relative [&_button]:rounded-full">
             {showNewMsgIndicator && (
                 <div 
                     onClick={() => {
