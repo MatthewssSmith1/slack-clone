@@ -1,5 +1,6 @@
-import { Channel } from '@/types/slack';
 import { create, StateCreator } from 'zustand';
+import { useUserStore } from '@/stores/userStore';
+import { Channel } from '@/types/slack';
 import axios from 'axios';
 
 interface ChannelStore {
@@ -21,12 +22,16 @@ const storeCreator: StateCreator<ChannelStore> = (set, get) => ({
     error: null,
 
     fetchChannels: async () => {
-        console.log('fetching channels');
-        const currentState = get();
-        if (currentState.isLoading) return;
+        if (get().isLoading) return;
         
         set({ isLoading: true, error: null });
         try {
+            // Fetch users if needed
+            const { users, fetchUsers } = useUserStore.getState();
+            if (!users.length) {
+                await fetchUsers();
+            }
+
             const response = await axios.get<{ channels: Channel[] }>('/channels');
             const channels = response.data.channels;
             

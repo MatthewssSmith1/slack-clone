@@ -1,24 +1,36 @@
+import { useUserStatus, UserStatus } from '@/lib/status';
 import { cn } from '@/lib/utils';
-import { statusColors } from '@/lib/utils';
-import { useUserStatus } from '@/hooks/use-user-status';
 
-interface StatusIndicatorProps {
-    userId: number;
-    className?: string;
-}
+export default function StatusIndicator({ userId, className }: { userId: number; className?: string;}) {
+    const status = useUserStatus(userId);
 
-export default function StatusIndicator({ userId, className }: StatusIndicatorProps) {
-    const { status } = useUserStatus(userId);
+    if (!status) return null;
 
     return (
-        <div 
+        <div
+            role="status"
+            aria-label={`Your status is ${status}`}
             className={cn(
-                'absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-background',
-                statusColors[status],
-                'z-10',
+                'absolute -bottom-0.5 -right-0.5 size-[7px] rounded-full z-10 content-[""] saturate-[0.9] brightness-[1.1]',
+                colorOfStatus(status), 
                 className
             )}
-            aria-label={`User status: ${status}`}
-        />
+            style={{
+                backgroundColor: colorOfStatus(status),
+            }}
+        >
+            <span className="sr-only">{status}</span>
+        </div>  
     );
 } 
+
+export function colorOfStatus(status: UserStatus | null | undefined): string {
+    const colors = {
+        'Active': '#10b981',
+        'Away': '#f59e0b',
+        'Do Not Disturb': '#ef4444',
+        'Offline': '#6b7280',
+        'Custom': '#a855f7',
+    };
+    return status ? colors[status] : 'bg-gray-400';
+}

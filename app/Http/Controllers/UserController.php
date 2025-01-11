@@ -2,21 +2,24 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\User;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\JsonResponse;
+use App\Models\User;
 
 class UserController extends Controller
 {
     public function index(): JsonResponse
     {
-        // TODO: Add workspace filtering when workspaces are implemented
-        // $workspace = $request->user()->currentWorkspace;
-        // $users = $workspace->users()->get();
-        
         $users = User::select(['id', 'name', 'status', 'profile_picture', 'last_active_at'])
             ->orderBy('name')
             ->get();
+        
+        $currentUserId = Auth::id();
 
-        return response()->json($users);
+        return response()->json($users->map(function ($user) use ($currentUserId) {
+            return array_merge($user->toArray(), [
+                'is_current' => $user->id === $currentUserId
+            ]);
+        }));
     }
 }

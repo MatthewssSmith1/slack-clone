@@ -5,7 +5,7 @@ export default function Welcome({
     auth,
     laravelVersion,
     phpVersion,
-}: PageProps<{ laravelVersion: string; phpVersion: string }>) {
+}: PageProps & { laravelVersion: string; phpVersion: string }) {
     return (
         <>
             <Head title="Welcome" />

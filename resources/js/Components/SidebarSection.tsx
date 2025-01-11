@@ -1,12 +1,12 @@
-import { ChannelType } from '@/lib/utils';
-import { cn } from '@/lib/utils';
 import { Plus, Settings, Check, ChevronDown } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { useAuth } from '@/hooks/use-auth';
 import { useChannelStore } from '@/stores/channelStore';
-import Dropdown from '@/Components/Dropdown';
+import { ChannelType } from '@/lib/utils';
 import ChannelOption from '@/Components/ChannelOption';
 import { Suspense } from 'react';
+import { useAuth } from '@/hooks/use-auth';
+import { Button } from '@/components/ui/button';
+import Dropdown from '@/Components/Dropdown';
+import { cn } from '@/lib/utils';
 
 interface Props {
     title: string;
@@ -35,7 +35,7 @@ export default function SidebarSection({
                 </Dropdown.Trigger>
                 <DropdownMenu addButtonText={addButtonText} />
                 {filteredChannels.map(channel => (
-                    <ChannelOption key={channel.id} channel={channel} isCurrent={channel.id === currentChannel?.id} userName={user.name} />
+                    <ChannelOption key={channel.id} channel={channel} isCurrent={channel.id === currentChannel?.id} />
                 ))}
             </Dropdown>
         </Suspense>

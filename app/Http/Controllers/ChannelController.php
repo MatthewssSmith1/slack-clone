@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Channel;
+use App\Enums\ChannelType;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -11,12 +12,26 @@ class ChannelController extends Controller
 {
     public function index(): JsonResponse
     {
-        $channels = Auth::user()
-            ->channels()
+        $user = Auth::user();
+        $channels = $user->channels()
             ->withCount('users')
-            ->with(['messages.user', 'users'])
+            ->with(['messages.user'])
+            ->select('channels.*')
+            ->with(['users' => function($query) use ($user) {
+                $query->select('users.id', 'users.name', 'users.status')
+                    ->where('users.id', '!=', $user->id);
+            }])
             ->orderBy('name')
-            ->get();
+            ->get()
+            ->map(function ($channel) use ($user) {
+                if ($channel->channel_type === ChannelType::Direct) {
+                    // Filter out the current user's name from DM channel names
+                    $channel->name = collect(explode(', ', $channel->name))
+                        ->reject(fn($name) => $name === $user->name)
+                        ->join(', ');
+                }
+                return $channel;
+            });
 
         return response()->json([
             'channels' => $channels

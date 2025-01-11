@@ -1,17 +1,18 @@
+import StatusModal, { useStatusModal } from '@/Components/StatusModal';
 import { User, ChevronDown } from 'lucide-react';
-import { useAuth } from '@/hooks/use-auth';
-import StatusIndicator from '@/Components/StatusIndicator';
-import StatusModal from '@/Components/StatusModal';
+import { useUserStatus } from '@/lib/status';
 import { useUserStore } from '@/stores/userStore';
-import { parseUserStatus } from '@/lib/utils';
-import Dropdown from '@/Components/Dropdown';
-import { useStatusModal } from '@/Components/StatusModal';
+import StatusIndicator from '@/Components/StatusIndicator';
+import { useAuth } from '@/hooks/use-auth';
 import { Button } from '@/components/ui/button';
+import Dropdown from '@/Components/Dropdown';
 
 export default function SidebarHeader() {
     const { user } = useAuth();
-    const currentUser = useUserStore(state => state.users.find(u => u.id === user.id));
     const { open } = useStatusModal();
+    const status = useUserStatus(user.id);
+
+    console.log({ status });
 
     return (
         <>
@@ -23,7 +24,7 @@ export default function SidebarHeader() {
                     >
                         <div className="relative w-8 h-8 rounded-full bg-muted flex items-center justify-center me-2">
                             <User className="h-4 w-4 text-muted-foreground" />
-                            <StatusIndicator userId={user.id} />
+                            <StatusIndicator userId={user.id} className="size-[9px]" />
                         </div>
                         <div className="flex-1 text-left">
                             <div className="text-sm font-semibold text-gray-800 dark:text-gray-200">{user.name}</div>
@@ -36,7 +37,11 @@ export default function SidebarHeader() {
                 </Dropdown.Trigger>
 
                 <Dropdown.Content>
-                    <Dropdown.Link href="#" onClick={open}>
+                    <Dropdown.Link href="#" onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        open();
+                    }}>
                         Set Status
                     </Dropdown.Link>
                     <Dropdown.Link href={route('profile.edit')}>
@@ -48,7 +53,7 @@ export default function SidebarHeader() {
                 </Dropdown.Content>
             </Dropdown>
 
-            <StatusModal currentStatus={parseUserStatus(currentUser?.status || 'active')} />
+            <StatusModal currentStatus={status || 'Active'} />
         </>
     );
 } 

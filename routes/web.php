@@ -15,6 +15,7 @@ Route::get('/', function () {
     ]);
 });
 
+// TODO: use Route::resource where applicable
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/dashboard', function () {
         return Inertia::render('Dashboard');

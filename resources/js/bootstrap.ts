@@ -1,14 +1,11 @@
+import Pusher from 'pusher-js';
 import axios from 'axios';
 import Echo from 'laravel-echo';
-import Pusher from 'pusher-js';
 
 window.axios = axios;
 window.axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
 
-// Initialize Pusher first
 window.Pusher = Pusher;
-
-// Create Pusher instance with proper configuration
 const pusher = new Pusher(import.meta.env.VITE_REVERB_APP_KEY, {
     wsHost: import.meta.env.VITE_REVERB_HOST,
     wsPort: import.meta.env.VITE_REVERB_PORT ?? 80,
@@ -36,7 +33,6 @@ const pusher = new Pusher(import.meta.env.VITE_REVERB_APP_KEY, {
     })
 });
 
-// Initialize Echo with the Pusher instance
 window.Echo = new Echo({
     broadcaster: 'pusher',
     key: import.meta.env.VITE_REVERB_APP_KEY,

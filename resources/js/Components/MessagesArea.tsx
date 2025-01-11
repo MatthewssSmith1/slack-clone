@@ -1,22 +1,18 @@
+import { useMessagesWebsocket } from '@/hooks/use-messages-websocket';
 import { useRef, useEffect } from 'react';
-import { useMessageStore } from '@/stores/messageStore';
-import { useWebsocket } from '@/hooks/use-websocket';
 import MessageView from './MessageView';
 
 export default function MessagesArea() {
-    const { localMessages, hideNewMsgIndicator } = useMessageStore();
     const wrapperRef = useRef<HTMLDivElement>(null);
-    
+    const { localMessages: messages, hideNewMsgIndicator } = useMessagesWebsocket();
+
     useEffect(() => {
-        // `flex-col-reverse` below makes scrollTop negative: -100px represents being near bottom
+        // `flex-col-reverse` makes scrollTop negative: -100px represents being near bottom
         if ((wrapperRef.current?.scrollTop ?? 0) < -100) return;
         
-        const endElement = wrapperRef.current?.querySelector('#messages-end');
-        endElement?.scrollIntoView({ behavior: 'smooth' });
+        wrapperRef.current?.querySelector('#messages-end')?.scrollIntoView({ behavior: 'smooth' });
         hideNewMsgIndicator();
-    }, [localMessages]);
-
-    useWebsocket();
+    }, [messages]);
 
     return (
         <div 
@@ -25,7 +21,7 @@ export default function MessagesArea() {
         >
             <div className="flex flex-col-reverse gap-[1px]">
                 <div id="messages-end" />
-                {localMessages.map((message) => (
+                {messages.map((message) => (
                     <MessageView key={message.id} message={message} />
                 ))}
             </div>
