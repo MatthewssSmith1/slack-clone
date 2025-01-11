@@ -23,3 +23,26 @@ export function getChannelTypeLabel(type: ChannelType): string {
     [ChannelType.Direct]: 'Direct Message',
   }[type];
 }
+
+export enum UserStatus {
+    Active = '🟢 Active',
+    Away = '🌙 Away',
+    DND = '⛔ Do Not Disturb',
+    Offline = '⭕ Offline'
+}
+
+export const statusColors: Record<UserStatus, string> = {
+    [UserStatus.Active]: 'bg-emerald-500',
+    [UserStatus.Away]: 'bg-yellow-500',
+    [UserStatus.DND]: 'bg-red-500',
+    [UserStatus.Offline]: 'bg-gray-400',
+};
+
+export function parseUserStatus(status: string): UserStatus {
+    const lowered = status.toLowerCase();
+    if (lowered.includes('active')) return UserStatus.Active;
+    if (lowered.includes('away')) return UserStatus.Away;
+    if (lowered.includes('dnd') || lowered.includes('disturb')) return UserStatus.DND;
+    if (lowered.includes('offline')) return UserStatus.Offline;
+    return UserStatus.Active; // Default to Active for unrecognized status
+}

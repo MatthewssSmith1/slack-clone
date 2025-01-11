@@ -12,18 +12,31 @@ export function useWebsocket() {
     useEffect(() => {
         if (!currentChannel) return;
         
+        console.log(`WebSocket: Initializing channel ${currentChannel.id}`);
         setLocalMessages(currentChannel.messages);
 
         window.Echo?.leave(`channel.${currentChannel.id}`);
+        console.log(`WebSocket: Left channel ${currentChannel.id}`);
 
-        window.Echo
+        const channel = window.Echo
             .private(`channel.${currentChannel.id}`)
             .listen('MessagePosted', (event: { message: Message }) => {
-                if (event.message.user.id === user.id) return;
+                console.log(`WebSocket: Received message in channel ${currentChannel.id}`, event);
+                if (event.message.user.id === user.id) {
+                    console.log('WebSocket: Ignoring own message');
+                    return;
+                }
                 addMessage(event.message, false);
+            })
+            .subscribed(() => {
+                console.log(`WebSocket: Subscribed to channel ${currentChannel.id}`);
+            })
+            .error((error: any) => {
+                console.error(`WebSocket: Error in channel ${currentChannel.id}:`, error);
             });
 
         return () => {
+            console.log(`WebSocket: Cleanup for channel ${currentChannel.id}`);
             window.Echo?.leave(`channel.${currentChannel.id}`);
         };
     }, [currentChannel?.id, user.id]);

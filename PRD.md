@@ -19,6 +19,7 @@ User - name, email, email_verified_at, password, profile_picture (url), last_act
 ChannelUser - user_id, channel_id, role
 Message - user_id, channel_id, parent_id, content, deleted_at
 Channel - name, description, channel_type 
+Reaction - user_id, message_id, emoji_code
 <!-- TODO: Workspace - name, channel_id -->
 <!-- TODO: File, Emoji -->
 
