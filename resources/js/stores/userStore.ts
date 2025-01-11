@@ -21,8 +21,6 @@ export const useUserStore = create<UserState>((set) => ({
             const response = await axios.get<User[]>(route('users.index'));
             const currentUser = response.data.find(user => user.is_current);
 
-            console.log({ currentUser, users: response.data });
-
             set({
                 users: response.data,
                 currentUserId: currentUser?.id || null,

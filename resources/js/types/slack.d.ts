@@ -15,6 +15,7 @@ export interface Message {
     content: string;
     user: User;
     created_at: string;
+    isContinuation?: boolean;
 }
 
 export interface Channel {

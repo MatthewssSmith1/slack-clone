@@ -12,8 +12,6 @@ export default function SidebarHeader() {
     const { open } = useStatusModal();
     const status = useUserStatus(user.id);
 
-    console.log({ status });
-
     return (
         <>
             <Dropdown className="col-start-1 row-start-1 px-2 py-1 border-b border-r border-border bg-card">

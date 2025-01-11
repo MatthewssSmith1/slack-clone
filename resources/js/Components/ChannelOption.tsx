@@ -37,8 +37,6 @@ export default function ChannelOption({ channel, isCurrent }: Props) {
         ? channel.users[0]?.id
         : null;
     
-    console.log(otherUserId);
-
     return (
         <Button
             variant="ghost"
