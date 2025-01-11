@@ -13,7 +13,7 @@ export default function SidebarHeader() {
 
     return (
         <>
-            <Dropdown className="col-start-1 row-start-1 px-2 py-1 border-b border-r border-border bg-card">
+            <Dropdown as="nav" className="col-start-1 row-start-1 px-2 py-1 border-b border-r border-border bg-card">
                 <Dropdown.Trigger>
                     <Button 
                         variant="ghost" 

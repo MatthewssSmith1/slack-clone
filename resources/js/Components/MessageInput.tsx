@@ -21,14 +21,14 @@ export default function MessageInput() {
     }
 
     return (
-        <div className="bg-background m-4 mt-0 rounded-md relative [&_button]:rounded-full">
+        <footer className="bg-background m-4 mt-0 rounded-md relative [&_button]:rounded-full">
             <NewMessageIndicator />
             <form onSubmit={onSubmit} className="border border-border rounded-md bg-card">
                 <RichTextButtons />
                 <InputArea />
                 <BottomButtonRow />
             </form>
-        </div>
+        </footer>
     );
 }
 

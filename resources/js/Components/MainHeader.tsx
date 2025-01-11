@@ -4,8 +4,17 @@ import { formatDMChannelName } from '@/lib/utils';
 import { Head } from '@inertiajs/react';
 import { useAuth } from '@/hooks/use-auth';
 import { useChannelStore } from '@/stores/channelStore';
+import { Suspense } from 'react';
 
 export default function MainHeader() {
+    return (
+        <Suspense fallback={<div>Loading...</div>}>
+            <HeaderContent />
+        </Suspense>
+    );
+}
+
+function HeaderContent() {
     const { user } = useAuth();
     const { currentChannel } = useChannelStore();
     if (!currentChannel) return null;
