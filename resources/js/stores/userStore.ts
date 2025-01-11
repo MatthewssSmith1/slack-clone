@@ -37,8 +37,7 @@ export const useUserStore = create<UserState>((set) => ({
 
         const statusString = customMessage ? `${status}:${customMessage}` : status;
 
-        // Only update the current user's status
-        const updateUserState = (state: UserState) => {
+        set((state: UserState) => {
             const updatedUsers = state.users.map(user =>
                 user.id === state.currentUserId 
                     ? { ...user, status: statusString } 
@@ -49,16 +48,12 @@ export const useUserStore = create<UserState>((set) => ({
                 users: updatedUsers,
                 currentUser: updatedUsers.find(u => u.id === state.currentUserId)
             };
-        };
-
-        // Optimistic update for current user only
-        set(updateUserState);
+        });
 
         try {
             await axios.post(route('user.status.update'), { status: statusString });
         } catch (error) {
             console.error('Failed to update status:', error);
-            // Revert on error
             set(state => ({
                 users: state.users.map(user =>
                     user.id === state.currentUserId 

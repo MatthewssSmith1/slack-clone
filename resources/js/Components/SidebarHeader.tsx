@@ -1,7 +1,6 @@
 import StatusModal, { useStatusModal } from '@/Components/StatusModal';
 import { User, ChevronDown } from 'lucide-react';
 import { useUserStatus } from '@/lib/status';
-import { useUserStore } from '@/stores/userStore';
 import StatusIndicator from '@/Components/StatusIndicator';
 import { useAuth } from '@/hooks/use-auth';
 import { Button } from '@/components/ui/button';

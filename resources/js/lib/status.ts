@@ -9,15 +9,13 @@ export enum UserStatus {
     Active = 'Active',
     Away = 'Away',
     DND = 'Do Not Disturb',
-    Offline = 'Offline',
-    Custom = 'Custom'
+    Offline = 'Offline'
 }
 
 export function parseUserStatus(status: string): UserStatus {
     const lowered = status.toLowerCase();
-    if (lowered.includes('active')) return UserStatus.Active;
     if (lowered.includes('away')) return UserStatus.Away;
     if (lowered.includes('dnd') || lowered.includes('disturb')) return UserStatus.DND;
     if (lowered.includes('offline')) return UserStatus.Offline;
-    return UserStatus.Custom; // Default to Custom for unrecognized status
+    return UserStatus.Active; // Default to Active for unrecognized status
 }

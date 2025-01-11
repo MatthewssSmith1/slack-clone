@@ -1,9 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { UserStatus } from '@/lib/status';
-import { Activity, Clock, Moon, BellOff, Pencil } from 'lucide-react';
+import { Activity, Clock, Moon, BellOff } from 'lucide-react';
 import { create } from 'zustand';
 import { useUserStore } from '@/stores/userStore';
 import { useAuth } from '@/hooks/use-auth';
@@ -30,32 +29,15 @@ const statusOptions = [
     { id: UserStatus.Away, label: 'Away', icon: Clock, color: 'text-yellow-500' },
     { id: UserStatus.Offline, label: 'Offline', icon: Moon, color: 'text-gray-400' },
     { id: UserStatus.DND, label: 'Do not disturb', icon: BellOff, color: 'text-red-500' },
-    { id: UserStatus.Custom, label: 'Custom Status', icon: Pencil, color: 'text-purple-500' },
 ] as const;
 
 export default function StatusModal({ currentStatus }: StatusModalProps) {
-    const [selectedStatus, setSelectedStatus] = useState<UserStatus | 'custom'>(currentStatus);
-    const [customStatus, setCustomStatus] = useState('');
+    const [selectedStatus, setSelectedStatus] = useState<UserStatus>(currentStatus);
     const { isOpen, close } = useStatusModal();
-    const { user } = useAuth();
     const { updateStatus } = useUserStore();
 
-    useEffect(() => {
-        if (user?.status && user.status.includes(':')) {
-            const [_, message] = user.status.split(':');
-            setCustomStatus(message);
-            setSelectedStatus('custom');
-        } else {
-            setCustomStatus('');
-        }
-    }, [user?.status]);
-
     const handleStatusChange = async () => {
-        if (selectedStatus === 'custom') {
-            await updateStatus(UserStatus.Active, customStatus.trim() || undefined);
-        } else {
-            await updateStatus(selectedStatus);
-        }
+        await updateStatus(selectedStatus);
         close();
     };
 
@@ -94,31 +76,12 @@ export default function StatusModal({ currentStatus }: StatusModalProps) {
                             </Button>
                         ))}
                     </div>
-
-                    <div className={cn(
-                        "space-y-2 transition-opacity duration-200",
-                        selectedStatus === 'custom' 
-                            ? "opacity-100 pointer-events-auto"
-                            : "opacity-0 pointer-events-none"
-                    )}>
-                        <Input
-                            id="custom-status"
-                            value={customStatus}
-                            onChange={(e) => setCustomStatus(e.target.value)}
-                            placeholder="What's on your mind?"
-                            maxLength={100}
-                            className="focus-visible:ring-2"
-                        />
-                    </div>
                 </div>
                 <div className="flex justify-center gap-4">
                     <Button variant="outline" onClick={close}>
                         Cancel
                     </Button>
-                    <Button 
-                        onClick={handleStatusChange}
-                        disabled={selectedStatus === 'custom' && !customStatus.trim()}
-                    >
+                    <Button onClick={handleStatusChange}>
                         Save
                     </Button>
                 </div>
