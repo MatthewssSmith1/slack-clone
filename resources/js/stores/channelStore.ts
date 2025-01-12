@@ -1,5 +1,5 @@
 import { create, StateCreator } from 'zustand';
-import { useUserStore } from '@/stores/userStore';
+import { useMessageStore } from '@/stores/messageStore';
 import { Channel } from '@/types/slack';
 import axios from 'axios';
 
@@ -10,8 +10,6 @@ interface ChannelStore {
     error: string | null;
     fetchChannels: () => Promise<void>;
     setCurrentChannel: (channelId: number) => void;
-    updateChannel: (channelId: number, updates: Partial<Channel>) => void;
-    updateChannelUserCount: (channelId: number, count: number) => void;
 }
 
 const storeCreator: StateCreator<ChannelStore> = (set, get) => ({
@@ -21,64 +19,46 @@ const storeCreator: StateCreator<ChannelStore> = (set, get) => ({
     error: null,
 
     fetchChannels: async () => {
-        if (get().isLoading) return;
-        
         set({ isLoading: true, error: null });
         try {
-            // Fetch users if needed
-            const { users, fetchUsers } = useUserStore.getState();
-            if (!users.length) {
-                await fetchUsers();
-            }
-
-            const response = await axios.get<{ channels: Channel[] }>('/channels');
+            const response = await axios.get<{ channels: Channel[] }>(route('channels.index'));
             console.log('Channel data from API:', response.data);
             const channels = response.data.channels;
-            
-            // Get channel ID from URL or use first channel
-            const urlParams = new URLSearchParams(window.location.search);
-            const channelId = parseInt(urlParams.get('channel') || '0');
-            const currentChannel = channels.find(c => c.id === channelId) || channels[0] || null;
 
-            if (!urlParams.has('channel') && currentChannel) 
-                window.history.replaceState({}, '', `/dashboard?channel=${currentChannel.id}`);
+            const currentChannel = getChannelFromUrl(channels);
 
-            set({ 
+            set({
                 channels,
                 currentChannel,
-                isLoading: false 
+                isLoading: false
             });
+
+            if (currentChannel) await useMessageStore.getState().loadChannelMessages(currentChannel.id);
         } catch (error) {
             set(state => ({ ...state, error: 'Failed to fetch channels', isLoading: false }));
         }
     },
 
-    setCurrentChannel: (channelId: number) => {
+    setCurrentChannel: async (channelId: number) => {
         const channel = get().channels.find(c => c.id === channelId);
-        if (channel) {
-            set({ currentChannel: channel });
-            // Update URL silently without page reload
-            window.history.replaceState({}, '', `/dashboard?channel=${channelId}`);
-        }
-    },
+        if (!channel) return;
 
-    updateChannel: (channelId: number, updates: Partial<Channel>) => {
-        set(state => ({
-            channels: state.channels.map(c => c.id === channelId ? { ...c, ...updates } : c),
-            currentChannel: state.currentChannel?.id === channelId ? { ...state.currentChannel, ...updates } : state.currentChannel
-        }));
-    },
-
-    updateChannelUserCount: (channelId: number, count: number) => {
-        set(state => ({
-            channels: state.channels.map(c => 
-                c.id === channelId ? { ...c, users_count: count } : c
-            ),
-            currentChannel: state.currentChannel?.id === channelId 
-                ? { ...state.currentChannel, users_count: count }
-                : state.currentChannel
-        }));
+        set({ currentChannel: channel });
+        window.history.replaceState({}, '', `/dashboard?channel=${channelId}`);
+        await useMessageStore.getState().loadChannelMessages(channelId);
     },
 });
 
-export const useChannelStore = create<ChannelStore>(storeCreator); 
+export const useChannelStore = create<ChannelStore>(storeCreator);
+
+const getChannelFromUrl = (channels: Channel[]): Channel | null => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const channelId = parseInt(urlParams.get('channel') || '0');
+    const channel = channels.find(c => c.id === channelId) || channels[0] || null;
+
+    if (!urlParams.has('channel') && channel) {
+        window.history.replaceState({}, '', `/dashboard?channel=${channel.id}`);
+    }
+
+    return channel;
+}; 

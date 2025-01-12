@@ -49,7 +49,7 @@ function UserButton() {
         >
             <div className="relative w-8 h-8 rounded-full bg-muted flex items-center justify-center me-2">
                 <User className="h-4 w-4 text-muted-foreground" />
-                <StatusIndicator userId={user.id} className="size-[9px]" />
+                <StatusIndicator userId={user.id} className="size-[9px] right-0 bottom-0" />
             </div>
             <div className="flex-1 text-left">
                 <div className="text-sm font-semibold text-gray-800 dark:text-gray-200">{user.name}</div>

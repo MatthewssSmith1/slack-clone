@@ -10,10 +10,6 @@ export function useMessagesWebsocket() {
     const store = useMessageStore();
 
     useEffect(() => {
-        if (currentChannel) store.setLocalMessages(currentChannel.messages);
-    }, [currentChannel?.id]);
-
-    useEffect(() => {
         if (!currentChannel) return;
         
         const channelId = `channel.${currentChannel.id}`;

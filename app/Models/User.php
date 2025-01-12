@@ -41,8 +41,8 @@ class User extends Authenticatable
 
     public function channels(): BelongsToMany
     {
-        return $this->belongsToMany(Channel::class)
-            ->withTimestamps()
-            ->withPivot(['role']);
+        return $this->belongsToMany(Channel::class);
+            // ->withTimestamps()
+            // ->withPivot(['role']);
     }
 }

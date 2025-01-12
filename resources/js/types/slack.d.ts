@@ -6,8 +6,11 @@ export interface User {
     email: string;
     status?: string;
     is_current?: boolean;
-    created_at: string;
-    updated_at: string;
+}
+
+export interface Reaction {
+    user: User;
+    emoji_code: string;
 }
 
 export interface Message {
@@ -16,6 +19,7 @@ export interface Message {
     user: User;
     created_at: string;
     isContinuation?: boolean;
+    formatted_reactions: Reaction[];
 }
 
 export interface Channel {
@@ -23,9 +27,6 @@ export interface Channel {
     name: string;
     description: string | null;
     channel_type: ChannelType;
-    created_at: string;
-    updated_at: string;
     users: User[];
     users_count: number;
-    messages: Message[];
 } 

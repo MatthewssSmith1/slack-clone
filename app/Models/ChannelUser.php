@@ -14,13 +14,11 @@ class ChannelUser extends Model
         'channel_id',
         'user_id',
         'role',
-        'is_muted',
         'last_read_at'
     ];
 
     protected $casts = [
         'role' => Role::class,
-        'is_muted' => 'boolean',
         'last_read_at' => 'datetime'
     ];
 

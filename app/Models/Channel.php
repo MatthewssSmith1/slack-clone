@@ -26,6 +26,7 @@ class Channel extends Model
         'channel_type' => ChannelType::class,
     ];
 
+    // TODO: consider removing this
     protected $withCount = ['users'];
 
     public function creator(): BelongsTo

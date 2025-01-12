@@ -1,6 +1,7 @@
-import * as React from 'react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Message } from '@/types/slack';
+import * as React from 'react';
+import { Button } from '@/components/ui/button';
 
 // Common emojis for reactions - we can expand this later
 const COMMON_EMOJIS = ['👍', '❤️', '😂', '🎉', '🙏', '👀', '🚀', '💯'];
@@ -9,16 +10,28 @@ interface EmojiSelectProps {
     message: Message;
     children: React.ReactNode;
     onEmojiSelect?: (emoji: string) => void;
+    open?: boolean;
+    onOpenChange?: (open: boolean) => void;
 }
 
-export default function EmojiSelect({ message, children, onEmojiSelect }: EmojiSelectProps) {
+export default function EmojiSelect({ children, onEmojiSelect, open, onOpenChange }: EmojiSelectProps) {
+    const [selectedEmoji, setSelectedEmoji] = React.useState<string | null>(null);
+
+    const handleConfirm = () => {
+        if (selectedEmoji) {
+            onEmojiSelect?.(selectedEmoji);
+            setSelectedEmoji(null);
+            onOpenChange?.(false);
+        }
+    };
+
     return (
-        <Popover>
+        <Popover open={open} onOpenChange={onOpenChange}>
             <PopoverTrigger asChild>
                 {children}
             </PopoverTrigger>
             <PopoverContent 
-                className="w-auto p-2" 
+                className="w-auto p-2 flex flex-col gap-2" 
                 align="start"
                 side="top"
             >
@@ -26,13 +39,23 @@ export default function EmojiSelect({ message, children, onEmojiSelect }: EmojiS
                     {COMMON_EMOJIS.map((emoji) => (
                         <button
                             key={emoji}
-                            onClick={() => onEmojiSelect?.(emoji)}
-                            className="hover:bg-muted p-1.5 rounded-md text-lg transition-colors"
+                            onClick={() => setSelectedEmoji(emoji)}
+                            className={`hover:bg-muted p-1.5 rounded-md text-lg transition-colors ${
+                                selectedEmoji === emoji ? 'bg-muted ring-2 ring-primary' : ''
+                            }`}
                         >
                             {emoji}
                         </button>
                     ))}
                 </div>
+                <Button 
+                    onClick={handleConfirm}
+                    disabled={!selectedEmoji}
+                    className="w-full mt-1"
+                    size="sm"
+                >
+                    Add Reaction
+                </Button>
             </PopoverContent>
         </Popover>
     );

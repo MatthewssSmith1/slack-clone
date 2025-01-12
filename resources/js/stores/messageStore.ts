@@ -1,61 +1,68 @@
 import { Message } from '@/types/slack';
 import { create } from 'zustand';
+import axios from 'axios';
 
 interface MessageState {
-    localMessages: Message[];
+    messages: Message[];
+    isLoading: boolean;
+    error: string | null;
     showNewMsgIndicator: boolean;
-    setLocalMessages: (messages: Message[]) => void;
+    loadChannelMessages: (channelId: number) => Promise<void>;
     addMessage: (message: Message, shouldScroll: boolean) => void;
     hideNewMsgIndicator: () => void;
 }
 
 export const useMessageStore = create<MessageState>((set, get): MessageState => ({
-    localMessages: [],
+    messages: [],
+    isLoading: false,
+    error: null,
     showNewMsgIndicator: false,
-    
-    setLocalMessages: (messages: Message[]) => {
-        const processedMessages = [...messages]
-            .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
-            .map((msg, idx, arr) => {
-                let isContinuation = false;
 
-                if (idx > 0) {
+    loadChannelMessages: async (channelId: number) => {
+        set({ isLoading: true, error: null });
+        
+        try {
+            const response = await axios.get<{ data: { messages: Message[] } }>(`/channels/${channelId}/messages`);
+            const rawMessages = response.data.data.messages;
+
+            // Process messages to add continuation flags
+            const processedMessages = [...rawMessages]
+                .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
+                .map((msg, idx, arr) => {
                     const prevMsg = arr[idx - 1];
-                    isContinuation = msg.user.id === prevMsg.user.id;
-                }
-                
-                return {
-                    ...msg,
-                    isContinuation: isContinuation
-                };
-            })
-            .reverse();
+                    const isContinuation = prevMsg && msg.user.id === prevMsg.user.id;
+                    return { ...msg, isContinuation };
+                })
+                .reverse();
 
-        set({ 
-            localMessages: processedMessages,
-            showNewMsgIndicator: false 
-        });
+            set({ messages: processedMessages });
+        } catch (error) {
+            console.error('Failed to load messages:', error);
+            set({ error: 'Failed to load messages', messages: [] });
+        } finally {
+            set({ isLoading: false });
+        }
     },
-    
+
     hideNewMsgIndicator: () => set({ showNewMsgIndicator: false }),
-    
+
     addMessage: (message: Message, shouldScroll: boolean) => {
-        set((state: MessageState) => {
-            const [latestMessage] = state.localMessages;
-            
-            const timeDiff = latestMessage ? 
+        set((state) => {
+            const [latestMessage] = state.messages;
+
+            const timeDiff = latestMessage ?
                 (new Date(message.created_at).getTime() - new Date(latestMessage.created_at).getTime()) / 1000 : null;
-            
+
             const sameUser = latestMessage ? message.user.id === latestMessage.user.id : false;
             const withinTimeLimit = timeDiff !== null && timeDiff < 300;
 
-            const newMessage = { 
-                ...message, 
-                isContinuation: sameUser && withinTimeLimit 
+            const newMessage = {
+                ...message,
+                isContinuation: sameUser && withinTimeLimit
             };
-            
-            return { 
-                localMessages: [newMessage, ...state.localMessages],
+
+            return {
+                messages: [newMessage, ...state.messages],
                 showNewMsgIndicator: !shouldScroll
             };
         });

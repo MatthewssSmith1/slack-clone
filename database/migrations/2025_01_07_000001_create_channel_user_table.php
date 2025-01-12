@@ -14,7 +14,6 @@ return new class extends Migration
             $table->foreignId('channel_id')->constrained()->onDelete('cascade');
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
             $table->string('role')->default(Role::Member->value);
-            $table->boolean('is_muted')->default(false);
             $table->timestamp('last_read_at')->nullable();
             $table->unique(['channel_id', 'user_id']);
             $table->timestamps();
