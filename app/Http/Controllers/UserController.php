@@ -2,11 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use Illuminate\Support\Facades\{Auth, Log};
+use Illuminate\Http\{JsonResponse, Request};
 use App\Events\StatusChanged;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Http\JsonResponse;
-use Illuminate\Http\Request;
-use Illuminate\Http\Response;
 use App\Models\User;
 
 class UserController extends Controller
@@ -39,14 +37,11 @@ class UserController extends Controller
         try {
             $user->update(['status' => $validated['status']]);
             
-            broadcast(new StatusChanged($user, $validated['status']))->toOthers();
+            broadcast(new StatusChanged($user->id, $validated['status']))->toOthers();
 
-            return response()->json([
-                'message' => 'Status updated successfully',
-                'user' => $user->only(['id', 'name', 'status'])
-            ]);
+            return response()->json([], 200);
         } catch (\Exception $e) {
-            return response()->json(['message' => 'Failed to update status'], 500);
+            return response()->json([], 500);
         }
     }
 }

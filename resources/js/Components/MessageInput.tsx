@@ -11,13 +11,13 @@ import { Button } from '@/components/ui/button';
 
 export default function MessageInput() {
     const { sendMessage } = useMessageInputStore();
-    const { currentChannel } = useChannelStore();
+    const { openChannel } = useChannelStore();
     
-    if (!currentChannel) return null;
+    if (!openChannel) return null;
 
     function onSubmit(e: React.FormEvent<HTMLFormElement>) {
         e.preventDefault();
-        currentChannel && sendMessage(currentChannel.id);
+        openChannel && sendMessage(openChannel.id);
     }
 
     return (
@@ -126,19 +126,19 @@ function NewMessageIndicator() {
 
 function InputArea() {
     const { message, setMessage, isSubmitting, sendMessage } = useMessageInputStore();
-    const { currentChannel } = useChannelStore();
+    const { openChannel } = useChannelStore();
     const { user } = useAuth();
 
     let placeholder = '';
     
-    if (currentChannel && user) {
-        if (currentChannel.channel_type === ChannelType.Direct) {
-            const otherUsers = currentChannel.name
+    if (openChannel && user) {
+        if (openChannel.channel_type === ChannelType.Direct) {
+            const otherUsers = openChannel.name
                 .split(', ')
                 .filter(name => name !== user.name);
             placeholder = `Message ${otherUsers}`;
         } else {
-            placeholder = `Message #${currentChannel.name}`;
+            placeholder = `Message #${openChannel.name}`;
         }
     }
 
@@ -150,8 +150,8 @@ function InputArea() {
             onKeyDown={(e) => {
                 if (e.key !== 'Enter' || e.shiftKey) return;
                 e.preventDefault();
-                if (!message.trim() || isSubmitting || !currentChannel) return;
-                sendMessage(currentChannel.id);
+                if (!message.trim() || isSubmitting || !openChannel) return;
+                sendMessage(openChannel.id);
             }} 
             className="min-h-[100px] resize-none border-0 focus-visible:ring-0 rounded-none px-3 py-[10px]" 
         />

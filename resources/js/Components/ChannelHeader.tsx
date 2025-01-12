@@ -9,35 +9,34 @@ import { Head } from '@inertiajs/react';
 export default function ChannelHeader() {
     return (
         <Suspense fallback={<div>Loading...</div>}>
-            <HeaderContent />
+            <Content />
         </Suspense>
     );
 }
 
-function HeaderContent() {
+function Content() {
     const { user } = useAuth();
-    const currentChannel = useChannelStore(state => state.currentChannel);
-    const users_count = useChannelStore(state => state.currentChannel?.users_count ?? 0);
-    
-    if (!currentChannel) return null;
-    
-    const displayName = currentChannel.channel_type !== ChannelType.Direct 
-        ? currentChannel.name 
-        : formatDMChannelName(currentChannel.name, user.name);
+    const { openChannel, userCount } = useChannelStore();
+
+    if (!openChannel) return null;
+
+    const displayName = openChannel.channel_type !== ChannelType.Direct
+        ? openChannel.name
+        : formatDMChannelName(openChannel.name, user.name);
 
     return (
         <>
-            <Head title={`${currentChannel.channel_type === ChannelType.Direct ? '' : '#'}${displayName} | Slacking Off`} />
+            <Head title={`${openChannel.channel_type === ChannelType.Direct ? '' : '#'}${displayName} | Slacking Off`} />
             <nav className="col-start-2 row-start-1 flex items-center justify-between border-b border-border bg-card pl-4 pr-8">
-                <h1 className="text-xl font-semibold flex items-center gap-2">
-                    {currentChannel.channel_type !== ChannelType.Direct && <ChannelPrefix />}
+                <h1 className="text-xl font-semibold flex items-center gap-2 select-none">
+                    {openChannel.channel_type !== ChannelType.Direct && <ChannelPrefix />}
                     {displayName}
                 </h1>
-                
+
                 <div className="grow" />
-                
-                {currentChannel.channel_type !== ChannelType.Direct && (
-                    <MemberCount count={users_count} />
+
+                {openChannel.channel_type !== ChannelType.Direct && (
+                    <MemberCount count={userCount} />
                 )}
             </nav>
         </>

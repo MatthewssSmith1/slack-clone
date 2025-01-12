@@ -1,7 +1,6 @@
 import { useEffect } from 'react';
 import { useAuth } from '@/hooks/use-auth';
 import { useUserStore } from '@/stores/userStore';
-import { User } from '@/types/slack';
 
 export function useStatusWebsocket() {
     const { user } = useAuth();
@@ -11,16 +10,10 @@ export function useStatusWebsocket() {
         window.Echo?.leave('status');
 
         window.Echo.channel('status')
-            .listen('StatusChanged', ({ 
-                user: updatedUser,
-                status 
-            }: { 
-                user: User;
-                status: string;
-            }) => {
-                if (updatedUser.id !== user.id) {
-                    updateStatus(updatedUser.id, status);
-                }
+            .listen('StatusChanged', ({ userId, status }: { userId: number; status: string }) => {
+                if (userId === user.id) return;
+                
+                updateStatus(userId, status);
             });
 
         return () => window.Echo?.leave('status');

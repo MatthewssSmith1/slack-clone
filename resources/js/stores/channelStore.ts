@@ -5,45 +5,38 @@ import axios from 'axios';
 
 interface ChannelStore {
     channels: Channel[];
-    currentChannel: Channel | null;
-    isLoading: boolean;
-    error: string | null;
+    openChannel: Channel | null;
+    userCount: number;
     fetchChannels: () => Promise<void>;
-    setCurrentChannel: (channelId: number) => void;
+    setOpenChannel: (channelId: number) => void;
 }
 
 const storeCreator: StateCreator<ChannelStore> = (set, get) => ({
     channels: [],
-    currentChannel: null,
-    isLoading: false,
-    error: null,
+    openChannel: null,
+    userCount: 0,
 
     fetchChannels: async () => {
-        set({ isLoading: true, error: null });
         try {
             const response = await axios.get<{ channels: Channel[] }>(route('channels.index'));
-            console.log('Channel data from API:', response.data);
             const channels = response.data.channels;
+            const openChannel = getChannelFromUrl(channels);
+            const userCount = 1 + (openChannel?.users.length ?? 0);
 
-            const currentChannel = getChannelFromUrl(channels);
+            set({ channels, openChannel, userCount });
 
-            set({
-                channels,
-                currentChannel,
-                isLoading: false
-            });
-
-            if (currentChannel) await useMessageStore.getState().loadChannelMessages(currentChannel.id);
+            if (openChannel) await useMessageStore.getState().loadChannelMessages(openChannel.id);
         } catch (error) {
-            set(state => ({ ...state, error: 'Failed to fetch channels', isLoading: false }));
+            console.error('Failed to fetch channels', error);
         }
     },
 
-    setCurrentChannel: async (channelId: number) => {
+    setOpenChannel: async (channelId: number) => {
         const channel = get().channels.find(c => c.id === channelId);
+        const userCount = 1 + (channel?.users.length ?? 0);
         if (!channel) return;
 
-        set({ currentChannel: channel });
+        set({ openChannel: channel, userCount });
         window.history.replaceState({}, '', `/dashboard?channel=${channelId}`);
         await useMessageStore.getState().loadChannelMessages(channelId);
     },

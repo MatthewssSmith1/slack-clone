@@ -6,6 +6,7 @@ export interface User {
     email: string;
     status?: string;
     is_current?: boolean;
+    email_verified_at?: string;
 }
 
 export interface Channel {
@@ -14,7 +15,6 @@ export interface Channel {
     description: string | null;
     channel_type: ChannelType;
     users: User[];
-    users_count: number;
 } 
 
 export interface Message {

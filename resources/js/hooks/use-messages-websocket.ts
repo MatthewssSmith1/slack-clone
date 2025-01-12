@@ -5,14 +5,14 @@ import { useAuth } from '@/hooks/use-auth';
 import { Message, User } from '@/types/slack';
 
 export function useMessagesWebsocket() {
-    const { currentChannel } = useChannelStore();
+    const { openChannel } = useChannelStore();
     const { user } = useAuth();
     const store = useMessageStore();
 
     useEffect(() => {
-        if (!currentChannel) return;
+        if (!openChannel) return;
         
-        const channelId = `channel.${currentChannel.id}`;
+        const channelId = `channel.${openChannel.id}`;
         window.Echo?.leave(channelId);
 
         window.Echo.private(channelId)
@@ -37,7 +37,7 @@ export function useMessagesWebsocket() {
             });
 
         return () => window.Echo?.leave(channelId);
-    }, [currentChannel?.id, user.id]);
+    }, [openChannel?.id, user.id]);
 
     return store;
 } 

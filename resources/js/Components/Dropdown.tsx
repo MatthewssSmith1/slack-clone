@@ -10,7 +10,7 @@ import React, {
     ElementType,
 } from 'react';
 
-const DropDownContext = createContext<{
+export const DropDownContext = createContext<{
     open: boolean;
     setOpen: Dispatch<SetStateAction<boolean>>;
     toggleOpen: () => void;

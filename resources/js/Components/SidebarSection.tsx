@@ -1,13 +1,11 @@
 import { Plus, Settings, Check, ChevronDown } from 'lucide-react';
+import ChannelOption, { SkeletonOption } from '@/Components/ChannelOption';
 import { useChannelStore } from '@/stores/channelStore';
 import { ChannelType } from '@/lib/utils';
-import ChannelOption from '@/Components/ChannelOption';
-import { Suspense, useState } from 'react';
-import { useAuth } from '@/hooks/use-auth';
+import { Suspense } from 'react';
 import { Button } from '@/components/ui/button';
 import Dropdown from '@/Components/Dropdown';
 import { cn } from '@/lib/utils';
-import CreateChannelModal from '@/Components/CreateChannelModal';
 
 interface Props {
     title: string;
@@ -24,12 +22,12 @@ export default function SidebarSection({
     addButtonText,
     onAddClick,
 }: Props) {
-    const { channels, currentChannel } = useChannelStore();
+    const { channels, openChannel } = useChannelStore();
     const filteredChannels = channels.filter(channel => channel.channel_type === channelType);
 
     return (
         <Suspense fallback={<div>Loading...</div>}>
-            <Dropdown as="section" role="menu" className={cn("px-2 first:mt-2 last:mb-2", className)}>
+            <Dropdown as="section" className={cn("px-2 first:mt-2 last:mb-2", className)}>
                 <Dropdown.Trigger>
                     <Button variant="ghost" className="w-full justify-between font-semibold text-lg text-gray-800 dark:text-gray-200 h-auto py-1">
                         {title} <ChevronDown className="h-4 w-4 opacity-50" />
@@ -37,8 +35,15 @@ export default function SidebarSection({
                 </Dropdown.Trigger>
                 <DropdownMenu addButtonText={addButtonText} onAddClick={onAddClick} />
                 {filteredChannels.map(channel => (
-                    <ChannelOption key={channel.id} channel={channel} isCurrent={channel.id === currentChannel?.id} />
+                    <ChannelOption key={channel.id} channel={channel} isCurrent={channel.id === openChannel?.id} />
                 ))}
+                { channels.length === 0 && (
+                    <>
+                        <SkeletonOption />
+                        <SkeletonOption />
+                        <SkeletonOption />
+                    </>
+                )}
             </Dropdown>
         </Suspense>
     );
