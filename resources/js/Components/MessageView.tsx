@@ -1,9 +1,9 @@
 import { User as UserIcon, Reply, SmilePlus } from 'lucide-react';
-import { useAuth } from '@/hooks/use-auth';
 import { Message, Reaction } from '@/types/slack';
+import { useState, useMemo } from 'react';
+import { useAuth } from '@/hooks/use-auth';
 import EmojiSelect from './EmojiSelect';
 import { Button } from '@/components/ui/button';
-import { useState, useMemo } from 'react';
 import axios from 'axios';
 
 const TIME_FORMAT_OPTIONS: Intl.DateTimeFormatOptions = {
@@ -26,14 +26,13 @@ export default function MessageView({ message }: MessageViewProps) {
     const { user } = useAuth();
     const [isEmojiOpen, setIsEmojiOpen] = useState(false);
 
-    // Don't show reactions UI until we have the user loaded
     if (!user) return null;
 
     const isCurrentUser = message.user.id === user.id;
 
     const handleEmojiSelect = async (emoji: string) => {
         try {
-            await axios.post(`/messages/${message.id}/reaction`, {
+            await axios.post(route('reactions.store', { message: message.id }), {
                 emoji_code: emoji,
             });
             // TODO: Optimistically update UI or trigger a refresh
@@ -44,7 +43,7 @@ export default function MessageView({ message }: MessageViewProps) {
 
     const handleRemoveReaction = async () => {
         try {
-            await axios.delete(`/messages/${message.id}/reaction`);
+            await axios.delete(route('reactions.destroy', { message: message.id }));
             // TODO: Optimistically update UI or trigger a refresh
         } catch (error) {
             console.error('Failed to remove reaction:', error);

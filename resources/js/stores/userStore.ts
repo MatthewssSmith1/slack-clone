@@ -51,7 +51,7 @@ export const useUserStore = create<UserState>((set) => ({
         });
 
         try {
-            await axios.post(route('user.status.update'), { status: statusString });
+            await axios.patch(route('users.update', state.currentUserId), { status: statusString });
         } catch (error) {
             console.error('Failed to update status:', error);
             set(state => ({

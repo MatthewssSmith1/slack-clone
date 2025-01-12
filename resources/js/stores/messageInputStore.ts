@@ -22,21 +22,23 @@ export const useMessageInputStore = create<MessageInputState>((set, get) => ({
   setShowRichText: (show: boolean) => set({ showRichText: show }),
 
   sendMessage: async (channelId: number) => {
-    const { message, isSubmitting } = get();
-    if (!message.trim() || isSubmitting) return;
+    const content = get().message.trim();
+    if (!content) return;
 
-    set({ isSubmitting: true });
     try {
-      const response = await axios.post<Message>(
-        route('messages.store', channelId),
-        { content: message }
+      const response = await axios.post(
+        route('messages.store'),
+        {
+          content,
+          channelId
+        }
       );
 
+      set({ message: '' });
       useMessageStore.getState().addMessage(response.data, true);
-      set({ message: '', isSubmitting: false });
     } catch (error) {
       console.error('Failed to send message:', error);
-      set({ isSubmitting: false });
+      throw error;
     }
   }
 })); 

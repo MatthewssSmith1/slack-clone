@@ -1,6 +1,6 @@
 <?php
 
-use App\Http\Controllers\{ReactionController, ChannelController, ChannelMessagesController, MessageController, ProfileController, UserController};
+use App\Http\Controllers\{ReactionController, ChannelController, MessageController, ProfileController, UserController};
 use Illuminate\Support\Facades\Route;
 use Illuminate\Foundation\Application;
 use Inertia\Inertia;
@@ -24,17 +24,16 @@ Route::middleware('auth')->group(function () {
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/dashboard', function () {
         return Inertia::render('Dashboard');
-    })->middleware(['auth', 'verified'])->name('dashboard');
+    })->name('dashboard');
 
     Route::resource('channels', ChannelController::class);
+    Route::resource('users', UserController::class);
 
-    Route::get('/channels/{channel}/messages', [ChannelMessagesController::class, 'index'])->name('channel.messages.index');
-    Route::post('/channels/{channel}/messages', [MessageController::class, 'store'])->name('messages.store');
-    Route::post('/user/status', [UserStatusController::class, 'update'])->name('user.status.update');
-    Route::get('/users', [UserController::class, 'index'])->name('users.index');
+    Route::get('/messages', [MessageController::class, 'index'])->name('messages.index');
+    Route::post('/messages', [MessageController::class, 'store'])->name('messages.store');
 
-    Route::post('/messages/{message}/reaction', [ReactionController::class, 'store']);
-    Route::delete('/messages/{message}/reaction', [ReactionController::class, 'destroy']);
+    Route::post('/reactions/{message}', [ReactionController::class, 'store'])->name('reactions.store');
+    Route::delete('/reactions/{message}', [ReactionController::class, 'destroy'])->name('reactions.destroy');
 });
 
 require __DIR__.'/auth.php';

@@ -15,7 +15,7 @@ return new class extends Migration
             $table->string('emoji_code');
             $table->timestamps();
 
-            $table->unique(['user_id', 'message_id', 'emoji_code']);
+            $table->unique(['user_id', 'message_id']);
         });
     }
 

@@ -7,9 +7,9 @@ interface MessageState {
     isLoading: boolean;
     error: string | null;
     showNewMsgIndicator: boolean;
+    hideNewMsgIndicator: () => void;
     loadChannelMessages: (channelId: number) => Promise<void>;
     addMessage: (message: Message, shouldScroll: boolean) => void;
-    hideNewMsgIndicator: () => void;
 }
 
 export const useMessageStore = create<MessageState>((set, get): MessageState => ({
@@ -18,11 +18,13 @@ export const useMessageStore = create<MessageState>((set, get): MessageState => 
     error: null,
     showNewMsgIndicator: false,
 
+    hideNewMsgIndicator: () => set({ showNewMsgIndicator: false }),
+
     loadChannelMessages: async (channelId: number) => {
         set({ isLoading: true, error: null });
         
         try {
-            const response = await axios.get<{ data: { messages: Message[] } }>(`/channels/${channelId}/messages`);
+            const response = await axios.get(route('messages.index', { channelId }));
             const rawMessages = response.data.data.messages;
 
             // Process messages to add continuation flags
@@ -43,8 +45,6 @@ export const useMessageStore = create<MessageState>((set, get): MessageState => 
             set({ isLoading: false });
         }
     },
-
-    hideNewMsgIndicator: () => set({ showNewMsgIndicator: false }),
 
     addMessage: (message: Message, shouldScroll: boolean) => {
         set((state) => {
