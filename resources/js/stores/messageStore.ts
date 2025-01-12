@@ -1,4 +1,4 @@
-import { Message, User } from '@/types/slack';
+import { Message, User, Reaction } from '@/types/slack';
 import { create } from 'zustand';
 import axios from 'axios';
 
@@ -29,7 +29,7 @@ export const useMessageStore = create<MessageState>((set, get): MessageState => 
             const rawMessages = response.data.data.messages;
 
             // Process messages to add continuation flags
-            const processedMessages = [...rawMessages]
+            const messages = [...rawMessages]
                 .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
                 .map((msg, idx, arr) => {
                     const prevMsg = arr[idx - 1];
@@ -38,7 +38,7 @@ export const useMessageStore = create<MessageState>((set, get): MessageState => 
                 })
                 .reverse();
 
-            set({ messages: processedMessages });
+            set({ messages });
         } catch (error) {
             console.error('Failed to load messages:', error);
             set({ error: 'Failed to load messages', messages: [] });
@@ -49,17 +49,11 @@ export const useMessageStore = create<MessageState>((set, get): MessageState => 
 
     addMessage: (message: Message, shouldScroll: boolean) => {
         set((state) => {
-            const [latestMessage] = state.messages;
-
-            const timeDiff = latestMessage ?
-                (new Date(message.created_at).getTime() - new Date(latestMessage.created_at).getTime()) / 1000 : null;
-
-            const sameUser = latestMessage ? message.user.id === latestMessage.user.id : false;
-            const withinTimeLimit = timeDiff !== null && timeDiff < 300;
+            const [prevMessage] = state.messages;
 
             const newMessage = {
                 ...message,
-                isContinuation: sameUser && withinTimeLimit
+                isContinuation: prevMessage ? message.user.id === prevMessage.user.id : false
             };
 
             return {
@@ -80,7 +74,7 @@ export const useMessageStore = create<MessageState>((set, get): MessageState => 
             messages: state.messages.map(msg => {
                 if (msg.id !== messageId) return msg;
 
-                const reactions = [...(msg.formatted_reactions || [])];
+                const reactions: Reaction[] = [...(msg.reactions || [])];
                 const existingIndex = reactions.findIndex(r => 
                     r.user.id === user.id && r.emoji_code === emojiCode
                 );
@@ -91,7 +85,7 @@ export const useMessageStore = create<MessageState>((set, get): MessageState => 
                     reactions.push({ user, emoji_code: emojiCode });
                 }
 
-                return { ...msg, formatted_reactions: reactions };
+                return { ...msg, reactions };
             })
         }));
     }

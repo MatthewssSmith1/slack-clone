@@ -1,8 +1,9 @@
 import { useMessagesWebsocket } from '@/hooks/use-messages-websocket';
 import { useEffect, useRef } from 'react';
+import { useMessageStore } from '@/stores/messageStore';
+import EmojiMenu from './EmojiMenu';
 import MessageListView from '@/Components/MessageListView';
 import MessageInput from '@/Components/MessageInput';
-import { useMessageStore } from '@/stores/messageStore';
 import { Loader2 } from 'lucide-react';
 
 export default function ChannelView() {
@@ -35,6 +36,7 @@ function ScrollRegion() {
             ) : (
                 <MessageListView />
             )}
+            <EmojiMenu />
         </main>
     );
 }

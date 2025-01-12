@@ -1,11 +1,12 @@
 import { User as UserIcon, Reply, SmilePlus } from 'lucide-react';
 import { Message, Reaction } from '@/types/slack';
-import { useState, useMemo } from 'react';
+import { useMemo } from 'react';
 import { useMessageStore } from '@/stores/messageStore';
 import { useAuth } from '@/hooks/use-auth';
-import EmojiSelect from './EmojiSelect';
 import { Button } from '@/components/ui/button';
+import { useEmojiPickerStore } from '@/stores/emojiPickerStore';
 import axios from 'axios';
+import { cn } from '@/lib/utils';
 
 const TIME_FORMAT: Intl.DateTimeFormatOptions = {
     hour: 'numeric',
@@ -22,24 +23,10 @@ export default function MessageView({ message }: { message: Message }) {
     const isContinuation = message.isContinuation;
     const { user } = useAuth();
     const { updateReaction } = useMessageStore();
-    const [isEmojiOpen, setIsEmojiOpen] = useState(false);
 
     if (!user) return null;
 
     const isCurrentUser = message.user.id === user.id;
-
-    const handleEmojiSelect = async (emoji: string) => {
-        try {
-            updateReaction(message.id, user, emoji, false);
-            
-            await axios.post(route('reactions.store', { message: message.id }), {
-                emoji_code: emoji,
-            });
-        } catch (error) {
-            updateReaction(message.id, user, emoji, true);
-            console.error('Failed to add reaction:', error);
-        }
-    };
 
     const handleRemoveReaction = async () => {
         try {
@@ -54,14 +41,12 @@ export default function MessageView({ message }: { message: Message }) {
 
     return (
         <div className="flex items-start gap-3 px-4 py-1 group hover:bg-background relative">
-            {isContinuation 
-                ? (<div className="w-8 h-2 mt-1.5" />) 
-                : (
-                    <div className="w-8 h-8 mt-1.5 rounded-full bg-muted flex items-center justify-center">
-                        <UserIcon className="h-4 w-4 text-muted-foreground" />
-                    </div>
-                )
-            }
+            <div className={cn(
+                "w-8 mt-1.5",
+                isContinuation ? "h-2" : "h-8 rounded-full bg-muted flex items-center justify-center"
+            )}>
+                {!isContinuation && <UserIcon className="h-4 w-4 text-muted-foreground" />}
+            </div>
             <div className="flex-1">
                 {!isContinuation && (
                     <div className="flex items-center gap-2 mb-0.5">
@@ -75,32 +60,28 @@ export default function MessageView({ message }: { message: Message }) {
                     {message.content}
                 </p>
                 <ReactionList 
-                    reactions={message.formatted_reactions}
+                    reactions={message.reactions}
                     userId={user.id}
-                    onEmojiSelect={handleEmojiSelect}
+                    message={message}
                     onRemoveReaction={handleRemoveReaction}
                 />
             </div>
             {!isCurrentUser && (
-                <MessageHoverMenu 
-                    message={message}
-                    isEmojiOpen={isEmojiOpen}
-                    onEmojiOpenChange={setIsEmojiOpen}
-                    onEmojiSelect={handleEmojiSelect}
-                />
+                <MessageHoverMenu message={message} />
             )}
         </div>
     );
 }
 
 interface ReactionListProps {
-    reactions: Message['formatted_reactions'];
+    reactions: Reaction[];
     userId: number;
-    onEmojiSelect: (emoji: string) => void;
+    message: Message;
     onRemoveReaction: () => void;
 }
 
-function ReactionList({ reactions, userId, onEmojiSelect, onRemoveReaction }: ReactionListProps) {
+function ReactionList({ reactions, userId, message, onRemoveReaction }: ReactionListProps) {
+    const { open } = useEmojiPickerStore();
     const groupedReactions = useMemo(() => {
         if (!reactions) return [];
 
@@ -131,7 +112,14 @@ function ReactionList({ reactions, userId, onEmojiSelect, onRemoveReaction }: Re
                 return (
                     <button
                         key={emoji_code}
-                        onClick={hasReacted ? onRemoveReaction : () => onEmojiSelect(emoji_code)}
+                        onClick={(e) => {
+                            if (hasReacted) {
+                                onRemoveReaction();
+                            } else {
+                                const rect = e.currentTarget.getBoundingClientRect();
+                                open(message, { x: rect.left, y: rect.bottom });
+                            }
+                        }}
                         className={`inline-flex items-center gap-1 text-xs rounded-full px-1 py-0.5 hover:bg-muted transition-colors ${
                             hasReacted ? 'bg-muted' : 'bg-background'
                         }`}
@@ -148,26 +136,26 @@ function ReactionList({ reactions, userId, onEmojiSelect, onRemoveReaction }: Re
 
 interface MessageHoverMenuProps {
     message: Message;
-    isEmojiOpen: boolean;
-    onEmojiOpenChange: (open: boolean) => void;
-    onEmojiSelect: (emoji: string) => void;
 }
 
-function MessageHoverMenu({ message, isEmojiOpen, onEmojiOpenChange, onEmojiSelect }: MessageHoverMenuProps) {
+function MessageHoverMenu({ message }: MessageHoverMenuProps) {
+    const { open } = useEmojiPickerStore();
+
     return (
         <div className="absolute right-4 top-1 opacity-0 group-hover:opacity-100 transition-opacity">
             <div className="flex gap-0.5 bg-background border rounded-md shadow-sm">
-                <EmojiSelect 
-                    message={message} 
-                    onEmojiSelect={onEmojiSelect}
-                    open={isEmojiOpen}
-                    onOpenChange={onEmojiOpenChange}
+                <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className="h-7 px-2"
+                    onClick={(e) => {
+                        const rect = e.currentTarget.getBoundingClientRect();
+                        open(message, { x: rect.left, y: rect.bottom });
+                    }}
                 >
-                    <Button variant="ghost" size="sm" className="h-7 px-2">
-                        <SmilePlus className="h-4 w-4" />
-                        <span className="sr-only">React</span>
-                    </Button>
-                </EmojiSelect>
+                    <SmilePlus className="h-4 w-4" />
+                    <span className="sr-only">React</span>
+                </Button>
                 <Button variant="ghost" size="sm" className="h-7 px-2">
                     <Reply className="h-4 w-4" />
                     <span className="sr-only">Reply</span>

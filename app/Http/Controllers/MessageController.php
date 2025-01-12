@@ -24,6 +24,7 @@ class MessageController extends Controller
             return response()->json(['error' => 'You do not have access to this channel.'], 403);
         }
 
+        // TODO: group reactions in php instead of sql
         $messages = $channel->messages()
             ->select('messages.*')
             ->with('user:id,name,profile_picture')
@@ -40,8 +41,7 @@ class MessageController extends Controller
             ->latest()
             ->get()
             ->map(function ($message) {
-                $message->formatted_reactions = $message->reactions ? json_decode($message->reactions, true) : [];
-                unset($message->reactions);
+                $message->reactions = $message->reactions ? json_decode($message->reactions, true) : [];
                 return $message;
             })
             ->reverse()

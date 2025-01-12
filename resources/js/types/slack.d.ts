@@ -8,20 +8,6 @@ export interface User {
     is_current?: boolean;
 }
 
-export interface Reaction {
-    user: User;
-    emoji_code: string;
-}
-
-export interface Message {
-    id: number;
-    content: string;
-    user: User;
-    created_at: string;
-    isContinuation?: boolean;
-    formatted_reactions: Reaction[];
-}
-
 export interface Channel {
     id: number;
     name: string;
@@ -30,3 +16,17 @@ export interface Channel {
     users: User[];
     users_count: number;
 } 
+
+export interface Message {
+    id: number;
+    content: string;
+    user: User;
+    created_at: string;
+    isContinuation?: boolean;
+    reactions: Reaction[];
+}
+
+export interface Reaction {
+    user: User;
+    emoji_code: string;
+}
