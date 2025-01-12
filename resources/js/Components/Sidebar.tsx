@@ -1,11 +1,13 @@
+import { useStatusWebsocket } from '@/hooks/use-status-websocket';
+import CreateChannelModal from '@/Components/CreateChannelModal';
 import { ChannelType } from '@/lib/utils';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import SidebarSection from '@/Components/SidebarSection';
-import CreateChannelModal from '@/Components/CreateChannelModal';
 import { useState } from 'react';
 
 export default function Sidebar() {
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+    useStatusWebsocket();
 
     return (
         <>

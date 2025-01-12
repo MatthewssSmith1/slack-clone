@@ -10,7 +10,7 @@ use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
 
-class UserStatusChanged implements ShouldBroadcast
+class StatusChanged implements ShouldBroadcast
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
@@ -19,18 +19,22 @@ class UserStatusChanged implements ShouldBroadcast
         public string $status
     ) {}
 
+    /**
+     * @return array<Channel>
+     */
     public function broadcastOn(): array
     {
-        return [new PrivateChannel('users')];
+        return [new Channel('status')];
     }
 
+    /**
+     * @return array<string, mixed>
+     */
     public function broadcastWith(): array
     {
         return [
-            'user' => [
-                'id' => $this->user->id,
-                'status' => $this->status,
-            ],
+            'user' => $this->user->only(['id', 'name', 'status', 'profile_picture']),
+            'status' => $this->status
         ];
     }
-}
+} 

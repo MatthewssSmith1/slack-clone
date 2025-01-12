@@ -1,13 +1,13 @@
-import { useState, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { UserStatus } from '@/lib/status';
-import { Activity, Clock, Moon, BellOff, Pencil } from 'lucide-react';
-import { create } from 'zustand';
+import { useState, useEffect } from 'react';
 import { useUserStore } from '@/stores/userStore';
+import { colorOfStatus, UserStatus, labelOfStatus, iconOfStatus, getAllStatuses } from '@/lib/status';
 import { useAuth } from '@/hooks/use-auth';
+import { Button } from '@/components/ui/button';
+import { create } from 'zustand';
+import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
+import axios from 'axios';
 
 interface StatusModalStore {
     isOpen: boolean;
@@ -24,14 +24,6 @@ export const useStatusModal = create<StatusModalStore>((set) => ({
 interface StatusModalProps {
     currentStatus: UserStatus;
 }
-
-const statusOptions = [
-    { id: UserStatus.Active, label: 'Active', icon: Activity, color: 'text-emerald-500' },
-    { id: UserStatus.Away, label: 'Away', icon: Clock, color: 'text-yellow-500' },
-    { id: UserStatus.Offline, label: 'Offline', icon: Moon, color: 'text-gray-400' },
-    { id: UserStatus.DND, label: 'Do not disturb', icon: BellOff, color: 'text-red-500' },
-    { id: 'custom' as const, label: 'Custom Status', icon: Pencil, color: 'text-purple-500' },
-] as const;
 
 export default function StatusModal({ currentStatus }: StatusModalProps) {
     const [selectedStatus, setSelectedStatus] = useState<UserStatus | 'custom'>(currentStatus);
@@ -51,11 +43,8 @@ export default function StatusModal({ currentStatus }: StatusModalProps) {
     }, [user?.status]);
 
     const handleStatusChange = async () => {
-        if (selectedStatus === 'custom') {
-            await updateStatus(UserStatus.Active, customStatus.trim() || undefined);
-        } else {
-            await updateStatus(selectedStatus);
-        }
+        await updateStatus(user.id, selectedStatus);
+        await axios.patch(route('users.update', user.id), { status: selectedStatus });
         close();
     };
 
@@ -80,24 +69,28 @@ export default function StatusModal({ currentStatus }: StatusModalProps) {
                 </DialogHeader>
                 <div className="space-y-3 py-4">
                     <div className="grid gap-2">
-                        {statusOptions.map(({ id, label, icon: Icon, color }) => (
-                            <Button
-                                key={id}
-                                variant={selectedStatus === id ? "secondary" : "ghost"}
-                                className={cn(
-                                    "w-full justify-start",
-                                )}
-                                onClick={() => setSelectedStatus(id)}
-                            >
-                                <Icon className={cn("mr-2 size-4 rounded-full transition-colors", color)} />
-                                {label}
-                            </Button>
-                        ))}
+                        {getAllStatuses().map((status) => {
+                            const Icon = iconOfStatus(status);
+                            return (
+                                <Button
+                                    key={status}
+                                    variant={selectedStatus === status ? "secondary" : "ghost"}
+                                    className="w-full justify-start"
+                                    onClick={() => setSelectedStatus(status)}
+                                >
+                                    <Icon 
+                                        className="mr-2 size-4 rounded-full transition-colors" 
+                                        style={{ color: colorOfStatus(status) }} 
+                                    />
+                                    {labelOfStatus(status)}
+                                </Button>
+                            );
+                        })}
                     </div>
 
                     <div className={cn(
                         "space-y-2 transition-opacity duration-200",
-                        selectedStatus === 'custom' 
+                        selectedStatus === 'Custom' 
                             ? "opacity-100 pointer-events-auto"
                             : "opacity-0 pointer-events-none"
                     )}>

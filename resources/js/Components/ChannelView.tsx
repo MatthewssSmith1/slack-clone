@@ -1,10 +1,10 @@
 import { useMessagesWebsocket } from '@/hooks/use-messages-websocket';
 import { useEffect, useRef } from 'react';
 import { useMessageStore } from '@/stores/messageStore';
-import EmojiMenu from './EmojiMenu';
 import MessageListView from '@/Components/MessageListView';
 import MessageInput from '@/Components/MessageInput';
 import { Loader2 } from 'lucide-react';
+import EmojiMenu from './EmojiMenu';
 
 export default function ChannelView() {
     return (

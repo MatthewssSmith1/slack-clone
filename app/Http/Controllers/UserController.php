@@ -2,8 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Events\UserStatusChanged;
-use App\Enums\UserStatus;
+use App\Events\StatusChanged;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -29,30 +28,25 @@ class UserController extends Controller
 
     public function update(Request $request, User $user): JsonResponse
     {
-        // Ensure user can only update their own status
-        if ($request->user()->id !== $user->id) {
-            return response()->json(['error' => 'Unauthorized'], 403);
+        if ($user->id !== Auth::id()) {
+            return response()->json(['message' => 'Unauthorized'], 403);
         }
 
         $validated = $request->validate([
-            'status' => ['sometimes', 'required', 'string'],
-            // Add other user fields here as needed
+            'status' => ['required', 'string', 'max:255'],
         ]);
 
-        if (isset($validated['status'])) {
-            $statusParts = explode(':', $validated['status'], 2);
-            $statusEnum = UserStatus::from($statusParts[0]);
-            $customMessage = $statusParts[1] ?? null;
-
-            $user->status = $customMessage 
-                ? "{$statusEnum->value}:{$customMessage}"
-                : $statusEnum->value;
+        try {
+            $user->update(['status' => $validated['status']]);
             
-            broadcast(new UserStatusChanged($user, $statusEnum->value))->toOthers();
+            broadcast(new StatusChanged($user, $validated['status']))->toOthers();
+
+            return response()->json([
+                'message' => 'Status updated successfully',
+                'user' => $user->only(['id', 'name', 'status'])
+            ]);
+        } catch (\Exception $e) {
+            return response()->json(['message' => 'Failed to update status'], 500);
         }
-
-        $user->save();
-
-        return response()->json(['status' => 'success']);
     }
 }
