@@ -1,19 +1,16 @@
 import { User as UserIcon, Reply, SmilePlus } from 'lucide-react';
 import { Message, Reaction } from '@/types/slack';
 import { useState, useMemo } from 'react';
+import { useMessageStore } from '@/stores/messageStore';
 import { useAuth } from '@/hooks/use-auth';
 import EmojiSelect from './EmojiSelect';
 import { Button } from '@/components/ui/button';
 import axios from 'axios';
 
-const TIME_FORMAT_OPTIONS: Intl.DateTimeFormatOptions = {
+const TIME_FORMAT: Intl.DateTimeFormatOptions = {
     hour: 'numeric',
     minute: '2-digit'
 };
-
-interface MessageViewProps {
-    message: Message;
-}
 
 interface GroupedReaction {
     emoji_code: string;
@@ -21,9 +18,10 @@ interface GroupedReaction {
     count: number;
 }
 
-export default function MessageView({ message }: MessageViewProps) {
+export default function MessageView({ message }: { message: Message }) {
     const isContinuation = message.isContinuation;
     const { user } = useAuth();
+    const { updateReaction } = useMessageStore();
     const [isEmojiOpen, setIsEmojiOpen] = useState(false);
 
     if (!user) return null;
@@ -32,20 +30,24 @@ export default function MessageView({ message }: MessageViewProps) {
 
     const handleEmojiSelect = async (emoji: string) => {
         try {
+            updateReaction(message.id, user, emoji, false);
+            
             await axios.post(route('reactions.store', { message: message.id }), {
                 emoji_code: emoji,
             });
-            // TODO: Optimistically update UI or trigger a refresh
         } catch (error) {
+            updateReaction(message.id, user, emoji, true);
             console.error('Failed to add reaction:', error);
         }
     };
 
     const handleRemoveReaction = async () => {
         try {
+            updateReaction(message.id, user, '', true);
+            
             await axios.delete(route('reactions.destroy', { message: message.id }));
-            // TODO: Optimistically update UI or trigger a refresh
         } catch (error) {
+            updateReaction(message.id, user, '', false);
             console.error('Failed to remove reaction:', error);
         }
     };
@@ -65,7 +67,7 @@ export default function MessageView({ message }: MessageViewProps) {
                     <div className="flex items-center gap-2 mb-0.5">
                         <span className="font-medium">{message.user.name}</span>
                         <span className="text-xs mt-[1px] text-muted-foreground select-none">
-                            {new Date(message.created_at).toLocaleTimeString([], TIME_FORMAT_OPTIONS)}
+                            {new Date(message.created_at).toLocaleTimeString([], TIME_FORMAT)}
                         </span>
                     </div> 
                 )}
@@ -130,7 +132,7 @@ function ReactionList({ reactions, userId, onEmojiSelect, onRemoveReaction }: Re
                     <button
                         key={emoji_code}
                         onClick={hasReacted ? onRemoveReaction : () => onEmojiSelect(emoji_code)}
-                        className={`inline-flex items-center gap-1 text-xs rounded-full px-2 py-0.5 hover:bg-muted transition-colors ${
+                        className={`inline-flex items-center gap-1 text-xs rounded-full px-1 py-0.5 hover:bg-muted transition-colors ${
                             hasReacted ? 'bg-muted' : 'bg-background'
                         }`}
                         title={users.map(u => u?.name).join(', ')}

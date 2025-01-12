@@ -1,4 +1,4 @@
-import { Message } from '@/types/slack';
+import { Message, User } from '@/types/slack';
 import { create } from 'zustand';
 import axios from 'axios';
 
@@ -10,6 +10,7 @@ interface MessageState {
     hideNewMsgIndicator: () => void;
     loadChannelMessages: (channelId: number) => Promise<void>;
     addMessage: (message: Message, shouldScroll: boolean) => void;
+    updateReaction: (messageId: number, user: User, emojiCode: string, removed: boolean) => void;
 }
 
 export const useMessageStore = create<MessageState>((set, get): MessageState => ({
@@ -72,5 +73,26 @@ export const useMessageStore = create<MessageState>((set, get): MessageState => 
                 get().hideNewMsgIndicator();
             }, 3000);
         }
+    },
+
+    updateReaction: (messageId: number, user: User, emojiCode: string, removed: boolean) => {
+        set((state) => ({
+            messages: state.messages.map(msg => {
+                if (msg.id !== messageId) return msg;
+
+                const reactions = [...(msg.formatted_reactions || [])];
+                const existingIndex = reactions.findIndex(r => 
+                    r.user.id === user.id && r.emoji_code === emojiCode
+                );
+
+                if (removed) {
+                    if (existingIndex > -1) reactions.splice(existingIndex, 1);
+                } else if (existingIndex === -1) {
+                    reactions.push({ user, emoji_code: emojiCode });
+                }
+
+                return { ...msg, formatted_reactions: reactions };
+            })
+        }));
     }
 })); 

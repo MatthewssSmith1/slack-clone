@@ -3,7 +3,7 @@
 @tailwind utilities;
 @layer base {
   :root {
-    --sidebar-width: 250px;
+    --sidebar-width: 220px;
     --header-height: 64px;
     /* shadcn */
     --background: 0 0% 100%;

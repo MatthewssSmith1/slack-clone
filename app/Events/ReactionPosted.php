@@ -3,6 +3,7 @@
 namespace App\Events;
 
 use App\Models\Message;
+use App\Models\User;
 use Illuminate\Broadcasting\Channel;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Broadcasting\PrivateChannel;
@@ -10,12 +11,15 @@ use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
 
-class MessagePosted implements ShouldBroadcast
+class ReactionPosted implements ShouldBroadcast
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
     public function __construct(
-        public Message $message
+        public Message $message,
+        public User $user,
+        public string $emoji_code,
+        public bool $removed = false
     ) {}
 
     /**
@@ -32,7 +36,10 @@ class MessagePosted implements ShouldBroadcast
     public function broadcastWith(): array
     {
         return [
-            'message' => $this->message->load('user:id,name,profile_picture'),
+            'message_id' => $this->message->id,
+            'user' => $this->user->only(['id', 'name', 'profile_picture']),
+            'emoji_code' => $this->emoji_code,
+            'removed' => $this->removed,
         ];
     }
-}
+} 
