@@ -7,30 +7,14 @@ import { Button } from '@/components/ui/button';
 import Dropdown from '@/Components/Dropdown';
 
 export default function SidebarHeader() {
-    const { user } = useAuth();
     const { open } = useStatusModal();
-    const status = useUserStatus(user.id);
+    const status = useUserStatus();
 
     return (
         <>
             <Dropdown as="nav" className="col-start-1 row-start-1 px-2 py-1 border-b border-r border-border bg-card">
                 <Dropdown.Trigger>
-                    <Button 
-                        variant="ghost" 
-                        className="w-full justify-start h-auto py-2 px-2"
-                    >
-                        <div className="relative w-8 h-8 rounded-full bg-muted flex items-center justify-center me-2">
-                            <User className="h-4 w-4 text-muted-foreground" />
-                            <StatusIndicator userId={user.id} className="size-[9px]" />
-                        </div>
-                        <div className="flex-1 text-left">
-                            <div className="text-sm font-semibold text-gray-800 dark:text-gray-200">{user.name}</div>
-                            <div className="text-xs text-gray-500">
-                                {user.email}
-                            </div>
-                        </div>
-                        <ChevronDown className="h-4 w-4 text-gray-500" />
-                    </Button>
+                    <UserButton />
                 </Dropdown.Trigger>
 
                 <Dropdown.Content>
@@ -54,3 +38,26 @@ export default function SidebarHeader() {
         </>
     );
 } 
+
+function UserButton() {
+    const { user } = useAuth();
+
+    return (
+        <Button 
+            variant="ghost" 
+            className="w-full justify-start h-auto py-2 px-2"
+        >
+            <div className="relative w-8 h-8 rounded-full bg-muted flex items-center justify-center me-2">
+                <User className="h-4 w-4 text-muted-foreground" />
+                <StatusIndicator userId={user.id} className="size-[9px]" />
+            </div>
+            <div className="flex-1 text-left">
+                <div className="text-sm font-semibold text-gray-800 dark:text-gray-200">{user.name}</div>
+                <div className="text-xs text-gray-500">
+                    {user.email}
+                </div>
+            </div>
+            <ChevronDown className="h-4 w-4 text-gray-500" />
+        </Button>
+    );
+}

@@ -9,10 +9,9 @@ interface ChannelStore {
     isLoading: boolean;
     error: string | null;
     fetchChannels: () => Promise<void>;
-    addChannel: (channel: Channel) => void;
     setCurrentChannel: (channelId: number) => void;
     updateChannel: (channelId: number, updates: Partial<Channel>) => void;
-    removeChannel: (channelId: number) => void;
+    updateChannelUserCount: (channelId: number, count: number) => void;
 }
 
 const storeCreator: StateCreator<ChannelStore> = (set, get) => ({
@@ -33,6 +32,7 @@ const storeCreator: StateCreator<ChannelStore> = (set, get) => ({
             }
 
             const response = await axios.get<{ channels: Channel[] }>('/channels');
+            console.log('Channel data from API:', response.data);
             const channels = response.data.channels;
             
             // Get channel ID from URL or use first channel
@@ -62,13 +62,6 @@ const storeCreator: StateCreator<ChannelStore> = (set, get) => ({
         }
     },
 
-    addChannel: (channel: Channel) => {
-        set(state => ({
-            channels: [...state.channels, channel],
-            currentChannel: state.currentChannel || channel
-        }));
-    },
-
     updateChannel: (channelId: number, updates: Partial<Channel>) => {
         set(state => ({
             channels: state.channels.map(c => c.id === channelId ? { ...c, ...updates } : c),
@@ -76,10 +69,14 @@ const storeCreator: StateCreator<ChannelStore> = (set, get) => ({
         }));
     },
 
-    removeChannel: (channelId: number) => {
+    updateChannelUserCount: (channelId: number, count: number) => {
         set(state => ({
-            channels: state.channels.filter(c => c.id !== channelId),
-            currentChannel: state.currentChannel?.id === channelId ? state.channels[0] || null : state.currentChannel
+            channels: state.channels.map(c => 
+                c.id === channelId ? { ...c, users_count: count } : c
+            ),
+            currentChannel: state.currentChannel?.id === channelId 
+                ? { ...state.currentChannel, users_count: count }
+                : state.currentChannel
         }));
     },
 });

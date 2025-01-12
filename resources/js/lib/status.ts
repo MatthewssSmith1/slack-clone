@@ -1,8 +1,12 @@
 import { useUserStore } from '@/stores/userStore';
+import { useAuth } from '@/hooks/use-auth';
 
-export function useUserStatus(userId: number) {
+export function useUserStatus(userId?: number) {
     const store = useUserStore();
-    return parseUserStatus(store.users.find(u => u.id === userId)?.status || UserStatus.Active);
+    const { user } = useAuth();
+    const targetId = userId ?? user.id;
+    
+    return parseUserStatus(store.users.find(u => u.id === targetId)?.status || UserStatus.Active);
 } 
 
 export enum UserStatus {

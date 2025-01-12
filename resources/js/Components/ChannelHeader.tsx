@@ -1,12 +1,12 @@
-import { UsersIcon, Hash } from 'lucide-react';
-import { ChannelType } from '@/lib/utils';
-import { formatDMChannelName } from '@/lib/utils';
-import { Head } from '@inertiajs/react';
-import { useAuth } from '@/hooks/use-auth';
 import { useChannelStore } from '@/stores/channelStore';
+import { UsersIcon, Hash } from 'lucide-react';
+import { formatDMChannelName } from '@/lib/utils';
+import { ChannelType } from '@/lib/utils';
 import { Suspense } from 'react';
+import { useAuth } from '@/hooks/use-auth';
+import { Head } from '@inertiajs/react';
 
-export default function MainHeader() {
+export default function ChannelHeader() {
     return (
         <Suspense fallback={<div>Loading...</div>}>
             <HeaderContent />
@@ -16,7 +16,9 @@ export default function MainHeader() {
 
 function HeaderContent() {
     const { user } = useAuth();
-    const { currentChannel } = useChannelStore();
+    const currentChannel = useChannelStore(state => state.currentChannel);
+    const users_count = useChannelStore(state => state.currentChannel?.users_count ?? 0);
+    
     if (!currentChannel) return null;
     
     const displayName = currentChannel.channel_type !== ChannelType.Direct 
@@ -34,7 +36,9 @@ function HeaderContent() {
                 
                 <div className="grow" />
                 
-                {currentChannel.channel_type !== ChannelType.Direct && <MemberCount count={currentChannel.users_count} />}
+                {currentChannel.channel_type !== ChannelType.Direct && (
+                    <MemberCount count={users_count} />
+                )}
             </nav>
         </>
     );
@@ -46,7 +50,7 @@ function ChannelPrefix() {
 
 function MemberCount({ count }: { count: number }) {
     return (
-        <div className="flex items-center gap-2 text-muted-foreground">
+        <div className="flex items-center gap-2 text-muted-foreground" title={`${count} members in channel`}>
             <UsersIcon className="h-4 w-4" />
             <span className="text-sm">{count}</span>
         </div>

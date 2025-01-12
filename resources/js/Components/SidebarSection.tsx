@@ -2,17 +2,19 @@ import { Plus, Settings, Check, ChevronDown } from 'lucide-react';
 import { useChannelStore } from '@/stores/channelStore';
 import { ChannelType } from '@/lib/utils';
 import ChannelOption from '@/Components/ChannelOption';
-import { Suspense } from 'react';
+import { Suspense, useState } from 'react';
 import { useAuth } from '@/hooks/use-auth';
 import { Button } from '@/components/ui/button';
 import Dropdown from '@/Components/Dropdown';
 import { cn } from '@/lib/utils';
+import CreateChannelModal from '@/Components/CreateChannelModal';
 
 interface Props {
     title: string;
     channelType: ChannelType;
     className?: string;
     addButtonText: string;
+    onAddClick?: () => void;
 }
 
 export default function SidebarSection({
@@ -20,8 +22,8 @@ export default function SidebarSection({
     channelType,
     className,
     addButtonText,
+    onAddClick,
 }: Props) {
-    const { user } = useAuth();
     const { channels, currentChannel } = useChannelStore();
     const filteredChannels = channels.filter(channel => channel.channel_type === channelType);
 
@@ -33,7 +35,7 @@ export default function SidebarSection({
                         {title} <ChevronDown className="h-4 w-4 opacity-50" />
                     </Button>
                 </Dropdown.Trigger>
-                <DropdownMenu addButtonText={addButtonText} />
+                <DropdownMenu addButtonText={addButtonText} onAddClick={onAddClick} />
                 {filteredChannels.map(channel => (
                     <ChannelOption key={channel.id} channel={channel} isCurrent={channel.id === currentChannel?.id} />
                 ))}
@@ -42,12 +44,19 @@ export default function SidebarSection({
     );
 }
 
-function DropdownMenu({ addButtonText }: { addButtonText: string; }) {
+function DropdownMenu({ addButtonText, onAddClick }: { addButtonText: string; onAddClick?: () => void }) {
     const buttonClassName = "w-full justify-start h-auto px-4 py-2 font-normal";
 
     return (
         <Dropdown.Content align="right" width="48" contentClasses="py-1 bg-card [&_svg]:mr-2 [&_svg]:size-4">
-            <Button variant="ghost" disabled className={buttonClassName}><Plus />{addButtonText}</Button>
+            <Button 
+                variant="ghost" 
+                className={buttonClassName}
+                onClick={onAddClick}
+                disabled={!onAddClick}
+            >
+                <Plus />{addButtonText}
+            </Button>
             <Button variant="ghost" disabled className={buttonClassName}><Settings />Manage</Button>
             <Button variant="ghost" disabled className={buttonClassName}><Check />Mark all as read</Button>
         </Dropdown.Content>
