@@ -1,6 +1,6 @@
 import { Plus, Settings, Check, ChevronDown } from 'lucide-react';
 import ChannelOption, { SkeletonOption } from '@/Components/ChannelOption';
-import { useChannelStore } from '@/stores/channelStore';
+import { useWorkspaceStore } from '@/stores/workspaceStore';
 import { ChannelType } from '@/lib/utils';
 import { Suspense } from 'react';
 import { Button } from '@/components/ui/button';
@@ -22,7 +22,7 @@ export default function SidebarSection({
     addButtonText,
     onAddClick,
 }: Props) {
-    const { channels, openChannel } = useChannelStore();
+    const { channels, currentChannel } = useWorkspaceStore();
     const filteredChannels = channels.filter(channel => channel.channel_type === channelType);
 
     return (
@@ -35,7 +35,7 @@ export default function SidebarSection({
                 </Dropdown.Trigger>
                 <DropdownMenu addButtonText={addButtonText} onAddClick={onAddClick} />
                 {filteredChannels.map(channel => (
-                    <ChannelOption key={channel.id} channel={channel} isCurrent={channel.id === openChannel?.id} />
+                    <ChannelOption key={channel.id} channel={channel} isCurrent={channel.id === currentChannel?.id} />
                 ))}
                 { channels.length === 0 && (
                     <>

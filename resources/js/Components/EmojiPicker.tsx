@@ -1,16 +1,21 @@
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { useEmojiPickerStore } from '@/stores/emojiPickerStore'
-import { useMessageStore } from '@/stores/messageStore'
+import { useChannelStore } from '@/stores/channelStore'
 import { useAuth } from '@/hooks/use-auth'
 import { Button } from '@/components/ui/button'
 import * as React from 'react'
 import axios from 'axios'
 
-const COMMON_EMOJIS = ['👍', '❤️', '😂', '🎉', '🙏', '👀', '🚀', '💯']
+const COMMON_EMOJIS = [
+  '👍', '❤️', '🎉', '💯', '🚀', '⭐', '✨', '🌟',
+  '😊', '😅', '😆', '🥹', '🥲', '🫡',
+  '👋', '🙏', '🤝', '👊', '✌️', '🫶', '👀', '💪',
+  '🔥', '💡', '✅', '❌', '⚡', '💫', '🎯', '💎'
+]
 
-export default function EmojiMenu() {
+export default function EmojiPicker() {
   const { isOpen, targetMessage, position, close } = useEmojiPickerStore()
-  const { updateReaction } = useMessageStore()
+  const { updateReaction } = useChannelStore()
   const { user } = useAuth()
   const [selectedEmoji, setSelectedEmoji] = React.useState<string | null>(null)
 

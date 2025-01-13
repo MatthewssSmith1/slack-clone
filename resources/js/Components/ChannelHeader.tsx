@@ -1,4 +1,4 @@
-import { useChannelStore } from '@/stores/channelStore';
+import { useWorkspaceStore } from '@/stores/workspaceStore';
 import { UsersIcon, Hash } from 'lucide-react';
 import { formatDMChannelName } from '@/lib/utils';
 import { ChannelType } from '@/lib/utils';
@@ -16,26 +16,26 @@ export default function ChannelHeader() {
 
 function Content() {
     const { user } = useAuth();
-    const { openChannel, userCount } = useChannelStore();
+    const { currentChannel, userCount } = useWorkspaceStore();
 
-    if (!openChannel) return null;
+    if (!currentChannel) return null;
 
-    const displayName = openChannel.channel_type !== ChannelType.Direct
-        ? openChannel.name
-        : formatDMChannelName(openChannel.name, user.name);
+    const displayName = currentChannel.channel_type !== ChannelType.Direct
+        ? currentChannel.name
+        : formatDMChannelName(currentChannel.name, user.name);
 
     return (
         <>
-            <Head title={`${openChannel.channel_type === ChannelType.Direct ? '' : '#'}${displayName} | Slacking Off`} />
+            <Head title={`${currentChannel.channel_type === ChannelType.Direct ? '' : '#'}${displayName} | Slacking Off`} />
             <nav className="col-start-2 row-start-1 flex items-center justify-between border-b border-border bg-card pl-4 pr-8">
                 <h1 className="text-xl font-semibold flex items-center gap-2 select-none">
-                    {openChannel.channel_type !== ChannelType.Direct && <ChannelPrefix />}
+                    {currentChannel.channel_type !== ChannelType.Direct && <ChannelPrefix />}
                     {displayName}
                 </h1>
 
                 <div className="grow" />
 
-                {openChannel.channel_type !== ChannelType.Direct && (
+                {currentChannel.channel_type !== ChannelType.Direct && (
                     <MemberCount count={userCount} />
                 )}
             </nav>

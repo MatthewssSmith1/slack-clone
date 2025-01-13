@@ -1,18 +1,18 @@
-import { useMessageStore } from '@/stores/messageStore';
 import { useChannelStore } from '@/stores/channelStore';
+import { useWorkspaceStore } from '@/stores/workspaceStore';
 import { useEffect } from 'react';
 import { useAuth } from '@/hooks/use-auth';
 import { Message, User } from '@/types/slack';
 
 export function useMessagesWebsocket() {
-    const { openChannel } = useChannelStore();
+    const { currentChannel } = useWorkspaceStore();
     const { user } = useAuth();
-    const store = useMessageStore();
+    const store = useChannelStore();
 
     useEffect(() => {
-        if (!openChannel) return;
+        if (!currentChannel) return;
         
-        const channelId = `channel.${openChannel.id}`;
+        const channelId = `channel.${currentChannel.id}`;
         window.Echo?.leave(channelId);
 
         window.Echo.private(channelId)
@@ -37,7 +37,7 @@ export function useMessagesWebsocket() {
             });
 
         return () => window.Echo?.leave(channelId);
-    }, [openChannel?.id, user.id]);
+    }, [currentChannel?.id, user.id]);
 
     return store;
 } 

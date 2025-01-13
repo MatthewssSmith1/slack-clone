@@ -1,57 +1,91 @@
-import { create, StateCreator } from 'zustand';
-import { useMessageStore } from '@/stores/messageStore';
-import { Channel } from '@/types/slack';
+import { Message, User, Reaction } from '@/types/slack';
+import { create } from 'zustand';
 import axios from 'axios';
 
-interface ChannelStore {
-    channels: Channel[];
-    openChannel: Channel | null;
-    userCount: number;
-    fetchChannels: () => Promise<void>;
-    setOpenChannel: (channelId: number) => void;
+interface ChannelState {
+    messages: Message[];
+    showIndicator: boolean;
+    scrollContainer: React.RefObject<HTMLDivElement> | null;
+    setscrollContainer: (ref: React.RefObject<HTMLDivElement>) => void;
+    setIndicator: (isVisible: boolean) => void;
+    loadMessages: (id: number) => Promise<void>;
+    addMessage: (message: Message, shouldScroll: boolean) => void;
+    updateReaction: (messageId: number, user: User, emojiCode: string, removed: boolean) => void;
 }
 
-const storeCreator: StateCreator<ChannelStore> = (set, get) => ({
-    channels: [],
-    openChannel: null,
-    userCount: 0,
+export const useChannelStore = create<ChannelState>((set, get): ChannelState => ({
+    messages: [],
+    showIndicator: false,
+    scrollContainer: null,
 
-    fetchChannels: async () => {
+    setscrollContainer: (ref) => set({ scrollContainer: ref }),
+
+    setIndicator: (isVisible: boolean) => set({ showIndicator: isVisible }),
+
+    loadMessages: async (channelId: number) => {
+        set({ messages: [] });
+
         try {
-            const response = await axios.get<{ channels: Channel[] }>(route('channels.index'));
-            const channels = response.data.channels;
-            const openChannel = getChannelFromUrl(channels);
-            const userCount = 1 + (openChannel?.users.length ?? 0);
+            const response = await axios.get(route('messages.index', { channelId }));
+            const rawMessages = response.data.data.messages;
 
-            set({ channels, openChannel, userCount });
+            // Process messages to add continuation flags
+            const messages = [...rawMessages]
+                .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
+                .map((msg, idx, arr) => {
+                    const prevMsg = arr[idx - 1];
+                    const isContinuation = prevMsg && msg.user.id === prevMsg.user.id;
+                    return { ...msg, isContinuation };
+                })
+                .reverse();
 
-            if (openChannel) await useMessageStore.getState().loadChannelMessages(openChannel.id);
+            set({ messages });
         } catch (error) {
-            console.error('Failed to fetch channels', error);
+            console.error('Failed to load messages:', error);
+            set({ messages: [] });
         }
     },
 
-    setOpenChannel: async (channelId: number) => {
-        const channel = get().channels.find(c => c.id === channelId);
-        const userCount = 1 + (channel?.users.length ?? 0);
-        if (!channel) return;
+    addMessage: (message: Message, shouldScroll: boolean) => {
+        set((state) => {
+            const [prevMessage] = state.messages;
 
-        set({ openChannel: channel, userCount });
-        window.history.replaceState({}, '', `/dashboard?channel=${channelId}`);
-        await useMessageStore.getState().loadChannelMessages(channelId);
+            const newMessage = {
+                ...message,
+                isContinuation: prevMessage ? message.user.id === prevMessage.user.id : false
+            };
+
+            return {
+                messages: [newMessage, ...state.messages],
+                showIndicator: !shouldScroll
+            };
+        });
+
+        if (!shouldScroll) {
+            setTimeout(() => {
+                get().setIndicator(false);
+            }, 3000);
+        }
     },
-});
 
-export const useChannelStore = create<ChannelStore>(storeCreator);
+    updateReaction: (messageId: number, user: User, emojiCode: string, removed: boolean) => {
+        set((state) => ({
+            messages: state.messages.map(msg => {
+                if (msg.id !== messageId) return msg;
 
-const getChannelFromUrl = (channels: Channel[]): Channel | null => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const channelId = parseInt(urlParams.get('channel') || '0');
-    const channel = channels.find(c => c.id === channelId) || channels[0] || null;
+                const reactions: Reaction[] = [...(msg.reactions || [])];
+                const existingIndex = reactions.findIndex(r =>
+                    r.user.id === user.id && r.emoji_code === emojiCode
+                );
 
-    if (!urlParams.has('channel') && channel) {
-        window.history.replaceState({}, '', `/dashboard?channel=${channel.id}`);
+                if (removed) {
+                    if (existingIndex > -1) reactions.splice(existingIndex, 1);
+                } else if (existingIndex === -1) {
+                    reactions.push({ user, emoji_code: emojiCode });
+                }
+
+                return { ...msg, reactions };
+            })
+        }));
     }
-
-    return channel;
-}; 
+})); 

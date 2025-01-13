@@ -1,6 +1,6 @@
 import { User as UserIcon, Reply, SmilePlus } from 'lucide-react';
 import { useEmojiPickerStore } from '@/stores/emojiPickerStore';
-import { useMessageStore } from '@/stores/messageStore';
+import { useChannelStore } from '@/stores/channelStore';
 import ReactionList from '@/Components/ReactionList';
 import { Message } from '@/types/slack';
 import { useAuth } from '@/hooks/use-auth';
@@ -16,7 +16,7 @@ const TIME_FORMAT: Intl.DateTimeFormatOptions = {
 export default function MessageView({ message }: { message: Message }) {
     const isContinuation = message.isContinuation;
     const { user } = useAuth();
-    const { updateReaction } = useMessageStore();
+    const { updateReaction } = useChannelStore();
 
     if (!user) return null;
 
@@ -34,7 +34,7 @@ export default function MessageView({ message }: { message: Message }) {
     };
 
     return (
-        <div className="flex items-start gap-3 px-4 py-1 group hover:bg-background relative">
+        <div className="message flex items-start gap-3 px-4 py-1 group hover:bg-background relative">
             <div className={cn(
                 "w-8 mt-1.5",
                 isContinuation ? "h-2" : "h-8 rounded-full bg-muted flex items-center justify-center"
@@ -60,40 +60,27 @@ export default function MessageView({ message }: { message: Message }) {
                     onRemoveReaction={handleRemoveReaction}
                 />
             </div>
-            {!isCurrentUser && (
-                <MessageHoverMenu message={message} />
-            )}
+            {!isCurrentUser && (<MessageHoverMenu message={message} />)}
         </div>
     );
 }
 
-interface MessageHoverMenuProps {
-    message: Message;
-}
-
-function MessageHoverMenu({ message }: MessageHoverMenuProps) {
+function MessageHoverMenu({ message }: { message: Message }) {
     const { open } = useEmojiPickerStore();
 
+    const openEmojis = (e: React.MouseEvent<HTMLButtonElement>) => {
+        const rect = e.currentTarget.getBoundingClientRect();
+        open(message, { x: rect.left, y: rect.bottom });
+    };
+
     return (
-        <div className="absolute right-4 top-1 opacity-0 group-hover:opacity-100 transition-opacity">
-            <div className="flex gap-0.5 bg-background border rounded-md shadow-sm">
-                <Button 
-                    variant="ghost" 
-                    size="sm" 
-                    className="h-7 px-2"
-                    onClick={(e) => {
-                        const rect = e.currentTarget.getBoundingClientRect();
-                        open(message, { x: rect.left, y: rect.bottom });
-                    }}
-                >
-                    <SmilePlus className="h-4 w-4" />
-                    <span className="sr-only">React</span>
-                </Button>
-                <Button variant="ghost" size="sm" className="h-7 px-2">
-                    <Reply className="h-4 w-4" />
-                    <span className="sr-only">Reply</span>
-                </Button>
-            </div>
+        <div className="absolute right-4 top-1 opacity-0 group-hover:opacity-100 transition-opacity flex gap-0.5 bg-background border rounded-md shadow-sm [&_svg]:size-4">
+            <Button variant="ghost" size="sm" className="h-7 px-2" aria-label="React" onClick={openEmojis}>
+                <SmilePlus />
+            </Button>
+            <Button variant="ghost" size="sm" className="h-7 px-2" aria-label="Reply">
+                <Reply />
+            </Button>
         </div>
     );
 } 

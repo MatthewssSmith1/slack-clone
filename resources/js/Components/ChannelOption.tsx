@@ -1,5 +1,5 @@
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { useChannelStore } from '@/stores/channelStore';
+import { useWorkspaceStore } from '@/stores/workspaceStore';
 import type { Channel } from '@/types/slack';
 import StatusIndicator from './StatusIndicator';
 import { ChannelType } from '@/lib/utils';
@@ -12,7 +12,7 @@ export function SkeletonOption() {
 }
 
 export default function ChannelOption({ channel, isCurrent }: { channel: Channel; isCurrent: boolean }) {
-    const { setOpenChannel } = useChannelStore();
+    const { setCurrentChannel } = useWorkspaceStore();
 
     // For DM channels, find the other user's ID
     const otherUserId = channel.channel_type === ChannelType.Direct
@@ -22,7 +22,7 @@ export default function ChannelOption({ channel, isCurrent }: { channel: Channel
     return (
         <Button
             variant="ghost"
-            onClick={() => setOpenChannel(channel.id)}
+            onClick={() => setCurrentChannel(channel.id)}
             className={cn(
                 "w-full justify-start gap-2 px-2 py-2 h-auto hover:bg-muted/50",
                 isCurrent && "bg-muted"

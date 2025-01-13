@@ -1,12 +1,12 @@
 import { PropsWithChildren, useEffect } from 'react';
-import { useChannelStore } from '@/stores/channelStore';
+import { useWorkspaceStore } from '@/stores/workspaceStore';
 import { useUserStore } from '@/stores/userStore';
 import SidebarHeader from '@/Components/SidebarHeader';
 import ChannelHeader from '@/Components/ChannelHeader';
 import Sidebar from '@/Components/Sidebar';
 
 export default function AuthLayout({ children }: PropsWithChildren) {
-    const { fetchChannels } = useChannelStore();
+    const { fetchChannels } = useWorkspaceStore();
     const { fetchUsers } = useUserStore();
 
     useEffect(() => {

@@ -1,25 +1,19 @@
+import { useChannelStore } from './channelStore';
 import { create } from 'zustand';
-import { useMessageStore } from './messageStore';
 import axios from 'axios';
-import { Message } from '@/types/slack';
 
-interface MessageInputState {
+interface NewMessageState {
   message: string;
-  isSubmitting: boolean;
-  showRichText: boolean;
   setMessage: (message: string) => void;
-  setShowRichText: (show: boolean) => void;
   sendMessage: (channelId: number) => Promise<void>;
+  showRichText: boolean;
+  setShowRichText: (show: boolean) => void;
 }
 
-export const useMessageInputStore = create<MessageInputState>((set, get) => ({
+export const useNewMessageStore = create<NewMessageState>((set, get) => ({
   message: '',
-  isSubmitting: false,
-  showRichText: false,
 
   setMessage: (message: string) => set({ message }),
-
-  setShowRichText: (show: boolean) => set({ showRichText: show }),
 
   sendMessage: async (channelId: number) => {
     const content = get().message.trim();
@@ -35,10 +29,14 @@ export const useMessageInputStore = create<MessageInputState>((set, get) => ({
       );
 
       set({ message: '' });
-      useMessageStore.getState().addMessage(response.data, true);
+      useChannelStore.getState().addMessage(response.data, true);
     } catch (error) {
       console.error('Failed to send message:', error);
       throw error;
     }
-  }
+  },
+
+  showRichText: false,
+
+  setShowRichText: (showRichText: boolean) => set({ showRichText }),
 })); 
