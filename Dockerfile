@@ -67,8 +67,7 @@ RUN composer install --optimize-autoloader --no-dev \
     ' bootstrap/app.php; \ 
     if [ -d .fly ]; then cp .fly/entrypoint.sh /entrypoint; chmod +x /entrypoint; fi;
 
-
-
+RUN mv .fly/worker.conf /etc/supervisor/conf.d/worker.conf
 
 # Multi-stage build: Build static assets
 # This allows us to not include Node within the final container
