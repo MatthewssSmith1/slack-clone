@@ -7,7 +7,6 @@ interface Position {
 }
 
 interface EmojiPickerState {
-  isOpen: boolean
   targetMessage: Message | null
   position: Position | null
   open: (message: Message, position: Position) => void
@@ -15,9 +14,8 @@ interface EmojiPickerState {
 }
 
 export const useEmojiPickerStore = create<EmojiPickerState>((set) => ({
-  isOpen: false,
   targetMessage: null,
   position: null,
-  open: (message, position) => set({ isOpen: true, targetMessage: message, position }),
-  close: () => set({ isOpen: false, targetMessage: null, position: null }),
+  open: (message, position) => set({ targetMessage: message, position }),
+  close: () => set({ targetMessage: null, position: null }),
 })) 

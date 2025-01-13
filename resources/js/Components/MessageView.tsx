@@ -23,12 +23,13 @@ export default function MessageView({ message }: { message: Message }) {
     const isCurrentUser = message.user.id === user.id;
 
     const handleRemoveReaction = async () => {
+        const existingReaction = message.reactions.find(r => r.user.id === user.id);
+        if (!existingReaction) return;
+
         try {
-            updateReaction(message.id, user, '', true);
-            
             await axios.delete(route('reactions.destroy', { message: message.id }));
+            updateReaction(message.id, user, '');
         } catch (error) {
-            updateReaction(message.id, user, '', false);
             console.error('Failed to remove reaction:', error);
         }
     };

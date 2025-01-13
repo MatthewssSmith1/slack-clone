@@ -1,15 +1,16 @@
 import { useEffect, useRef } from 'react';
 import { useChannelStore } from '@/stores/channelStore';
 import MessageInput from '@/Components/MessageInput';
+import EmojiPicker from '@/Components/EmojiPicker';
 import { Loader2 } from 'lucide-react';
 import MessageView from './MessageView';
 import { Message } from '@/types/slack';
 
 export default function ChannelView() {
-    const { messages, setscrollContainer } = useChannelStore();
+    const { messages, setScrollContainer, updateReaction } = useChannelStore();
 
     const scrollContainer = useRef<HTMLDivElement>(null);    
-    useEffect(() => setscrollContainer(scrollContainer), [scrollContainer]);
+    useEffect(() => setScrollContainer(scrollContainer), [scrollContainer]);
 
     return (
         <article className="col-start-2 row-start-2 grid grid-rows-[1fr_auto] overflow-hidden bg-muted">
@@ -17,6 +18,7 @@ export default function ChannelView() {
                 <ScrollRegion messages={messages} />
             </main>
             <MessageInput />
+            <EmojiPicker updateReaction={updateReaction} />
         </article>
     );
 }

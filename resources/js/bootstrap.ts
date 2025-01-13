@@ -6,13 +6,13 @@ window.axios = axios;
 window.axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
 
 window.Pusher = Pusher;
-const pusher = new Pusher(import.meta.env.VITE_REVERB_APP_KEY, {
-    wsHost: import.meta.env.VITE_REVERB_HOST,
-    wsPort: import.meta.env.VITE_REVERB_PORT ?? 80,
-    wssPort: import.meta.env.VITE_REVERB_PORT ?? 443,
-    forceTLS: (import.meta.env.VITE_REVERB_SCHEME ?? 'https') === 'https',
+const pusher = new Pusher('q3g1wcsq7lgoorqs6hsv', {
+    wsHost: import.meta.env.APP_DEBUG ? 'localhost' : 'slack-clone-2616.fly.dev',
+    wsPort: 8080,
+    wssPort: 8080,
+    forceTLS: false,
     enabledTransports: ['ws', 'wss'],
-    cluster: import.meta.env.VITE_REVERB_APP_CLUSTER ?? 'mt1',
+    cluster: 'mt1',
     authorizer: (channel: any) => ({
         authorize: (socketId: string, callback: Function) => {
             axios.post('/broadcasting/auth', {
@@ -35,6 +35,6 @@ const pusher = new Pusher(import.meta.env.VITE_REVERB_APP_KEY, {
 
 window.Echo = new Echo({
     broadcaster: 'pusher',
-    key: import.meta.env.VITE_REVERB_APP_KEY,
+    key: 'q3g1wcsq7lgoorqs6hsv',
     client: pusher
 });

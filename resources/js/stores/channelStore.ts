@@ -2,26 +2,27 @@ import { Message, User, Reaction } from '@/types/slack';
 import { create } from 'zustand';
 import axios from 'axios';
 
-interface ChannelState {
-    messages: Message[];
-    showIndicator: boolean;
+export interface ChannelState {
     scrollContainer: React.RefObject<HTMLDivElement> | null;
-    setscrollContainer: (ref: React.RefObject<HTMLDivElement>) => void;
+    setScrollContainer: (ref: React.RefObject<HTMLDivElement>) => void;
+
+    showIndicator: boolean;
     setIndicator: (isVisible: boolean) => void;
+
+    messages: Message[];
     loadMessages: (id: number) => Promise<void>;
     addMessage: (message: Message, shouldScroll: boolean) => void;
-    updateReaction: (messageId: number, user: User, emojiCode: string, removed: boolean) => void;
+    updateReaction: (messageId: number, user: User, emojiCode: string) => void;
 }
 
 export const useChannelStore = create<ChannelState>((set, get): ChannelState => ({
-    messages: [],
-    showIndicator: false,
     scrollContainer: null,
+    setScrollContainer: (ref) => set({ scrollContainer: ref }),
 
-    setscrollContainer: (ref) => set({ scrollContainer: ref }),
-
+    showIndicator: false,
     setIndicator: (isVisible: boolean) => set({ showIndicator: isVisible }),
 
+    messages: [],
     loadMessages: async (channelId: number) => {
         set({ messages: [] });
 
@@ -68,20 +69,20 @@ export const useChannelStore = create<ChannelState>((set, get): ChannelState => 
         }
     },
 
-    updateReaction: (messageId: number, user: User, emojiCode: string, removed: boolean) => {
+    updateReaction: (messageId: number, user: User, emojiCode: string) => {
         set((state) => ({
             messages: state.messages.map(msg => {
                 if (msg.id !== messageId) return msg;
 
-                const reactions: Reaction[] = [...(msg.reactions || [])];
-                const existingIndex = reactions.findIndex(r =>
-                    r.user.id === user.id && r.emoji_code === emojiCode
-                );
+                const reactions = [...(msg.reactions || [])];
+                const existingIndex = reactions.findIndex(r => r.user.id === user.id);
 
-                if (removed) {
+                if (emojiCode === '') {
                     if (existingIndex > -1) reactions.splice(existingIndex, 1);
                 } else if (existingIndex === -1) {
                     reactions.push({ user, emoji_code: emojiCode });
+                } else {
+                    reactions[existingIndex].emoji_code = emojiCode;
                 }
 
                 return { ...msg, reactions };

@@ -32,7 +32,7 @@ export function useMessagesWebsocket() {
                 removed: boolean;
             }) => {
                 if (reactionUser.id !== user.id) {
-                    store.updateReaction(message_id, reactionUser, emoji_code, removed);
+                    store.updateReaction(message_id, reactionUser, emoji_code);
                 }
             });
 

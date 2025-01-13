@@ -1,6 +1,6 @@
 import { Bold, Italic, ALargeSmall, Code, Link as LinkIcon, Send, Plus, Strikethrough, List, ListOrdered, Quote, CodeSquare } from 'lucide-react';
 import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
-import { useNewMessageStore } from '@/stores/messageInputStore';
+import { useNewMessageStore } from '@/stores/newMessageStore';
 import { useWorkspaceStore } from '@/stores/workspaceStore';
 import NewMessageIndicator from './NewMessageIndicator';
 import { ChannelType } from '@/lib/utils';
