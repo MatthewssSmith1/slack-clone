@@ -27,7 +27,7 @@ export default function SidebarSection({
 
     return (
         <Suspense fallback={<div>Loading...</div>}>
-            <Dropdown as="section" className={cn("px-2 first:mt-2 last:mb-2", className)}>
+            <Dropdown as="section" className={cn("first:mt-2 last:mb-2", className)}>
                 <Dropdown.Trigger>
                     <Button variant="ghost" className="w-full justify-between font-semibold text-lg text-gray-800 dark:text-gray-200 h-auto py-1">
                         {title} <ChevronDown className="h-4 w-4 opacity-50" />

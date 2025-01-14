@@ -16,7 +16,7 @@ export function HeaderWrapper({ children, className }: PropsWithChildren<{ class
     return (
         <nav className={cn(
             "row-start-1 flex items-center justify-between bg-card",
-            "border-border border-l border-b",
+            "border-border border-r border-b",
             "[&_*:first-child]:ml-4 [&_*:last-child]:mr-6 overflow-hidden min-w-0",
             className
         )}>

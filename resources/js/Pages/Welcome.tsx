@@ -1,5 +1,38 @@
 import { PageProps } from '@/types';
 import { Head, Link } from '@inertiajs/react';
+import { ReactNode } from 'react';
+
+interface FeaturePanelProps {
+    icon: ReactNode;
+    title: string;
+    description: string;
+    iconBgColor: string;
+    iconColor: string;
+    darkIconBgColor: string;
+    darkIconColor: string;
+}
+
+function FeaturePanel({
+    icon,
+    title,
+    description,
+    iconBgColor,
+    iconColor,
+    darkIconBgColor,
+    darkIconColor,
+}: FeaturePanelProps) {
+    return (
+        <div className="rounded-lg bg-white p-6 shadow-sm transition-all hover:shadow-md dark:bg-gray-800">
+            <div className={`mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full ${iconBgColor} ${darkIconBgColor}`}>
+                <div className={`h-6 w-6 ${iconColor} ${darkIconColor}`}>
+                    {icon}
+                </div>
+            </div>
+            <h3 className="mb-2 text-lg font-semibold text-gray-900 dark:text-white">{title}</h3>
+            <p className="text-sm text-gray-600 dark:text-gray-300">{description}</p>
+        </div>
+    );
+}
 
 export default function Welcome({
     auth,
@@ -59,6 +92,72 @@ export default function Welcome({
                         </header>
 
                         <main className="mt-6 min-h-screen">
+                            <div className="mx-auto max-w-4xl text-center">
+                                <h1 className="text-5xl font-bold tracking-tight text-gray-900 dark:text-white">
+                                    Welcome to ChatGenius
+                                </h1>
+                                <p className="mx-auto my-24 max-w-2xl text-lg text-gray-600 dark:text-gray-300">
+                                    A team communication platform built for clarity and efficiency. Organize your conversations in channels, start threads for focused discussions, and find any past message instantly with our search. Whether you're working remotely or in the office, ChatGenius helps keep your team aligned and productive.
+                                </p>
+
+                                <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4">
+                                    <FeaturePanel
+                                        icon={
+                                            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8h2a2 2 0 012 2v6a2 2 0 01-2 2h-2v4l-4-4H9a1.994 1.994 0 01-1.414-.586m0 0L11 14h4a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2v4l.586-.586z" />
+                                            </svg>
+                                        }
+                                        title="Channels"
+                                        description="Organize conversations by topic in dedicated channels"
+                                        iconBgColor="bg-indigo-100"
+                                        iconColor="text-indigo-600"
+                                        darkIconBgColor="dark:bg-indigo-900"
+                                        darkIconColor="dark:text-indigo-300"
+                                    />
+
+                                    <FeaturePanel
+                                        icon={
+                                            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                                            </svg>
+                                        }
+                                        title="Direct Messages"
+                                        description="Have private conversations with team members instantly"
+                                        iconBgColor="bg-green-100"
+                                        iconColor="text-green-600"
+                                        darkIconBgColor="dark:bg-green-900"
+                                        darkIconColor="dark:text-green-300"
+                                    />
+
+                                    <FeaturePanel
+                                        icon={
+                                            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
+                                            </svg>
+                                        }
+                                        title="Threads"
+                                        description="Keep discussions organized with threaded conversations"
+                                        iconBgColor="bg-purple-100"
+                                        iconColor="text-purple-600"
+                                        darkIconBgColor="dark:bg-purple-900"
+                                        darkIconColor="dark:text-purple-300"
+                                    />
+
+                                    <FeaturePanel
+                                        icon={
+                                            <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                            </svg>
+                                        }
+                                        title="Smart Search"
+                                        description="Find any message or file with our powerful RAG-based search"
+                                        iconBgColor="bg-yellow-100"
+                                        iconColor="text-yellow-600"
+                                        darkIconBgColor="dark:bg-yellow-900"
+                                        darkIconColor="dark:text-yellow-300"
+                                    />
+                                </div>
+                            </div>
                         </main>
 
                         <footer className="py-16 text-center text-sm text-black dark:text-white/70">

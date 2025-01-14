@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 export default function SidebarHeader() {
     return (
         <>
-            <Dropdown as="nav" className="col-start-1 row-start-1 px-2 py-1 bg-card">
+            <Dropdown as="nav" className="col-start-1 row-start-1 p-1.5 bg-card border-border border-b border-r">
                 <Trigger />
                 <Content />
             </Dropdown>
@@ -27,7 +27,7 @@ function Trigger() {
         <Dropdown.Trigger>
             <Button
                 variant="ghost"
-                className="w-full justify-start h-auto py-2 px-2"
+                className="w-full justify-start h-auto p-2"
             >
                 <div className="relative w-8 h-8 rounded-full bg-muted flex items-center justify-center me-2">
                     <User className="h-4 w-4 text-muted-foreground" />

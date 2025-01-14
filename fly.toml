@@ -53,14 +53,12 @@ console_command = 'php /var/www/html/artisan tinker'
   MAIL_MAILER = 'log'
 
   PUSHER_APP_ID = '1925182'
-  PUSHER_APP_KEY = 'e95195cb05c507f9aa3e'
   PUSHER_HOST = 'api-us2.pusher.com'
   PUSHER_PORT = '443'
   PUSHER_SCHEME = 'https'
   PUSHER_APP_CLUSTER = 'us2'
 
   VITE_APP_NAME = "${APP_NAME}"
-  VITE_PUSHER_APP_KEY = "${PUSHER_APP_KEY}"
   VITE_PUSHER_HOST = "${PUSHER_HOST}"
   VITE_PUSHER_PORT = "${PUSHER_PORT}"
   VITE_PUSHER_SCHEME = "${PUSHER_SCHEME}"

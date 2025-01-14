@@ -16,8 +16,6 @@ class MessageEmbeddingJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    const MODEL = 'text-embedding-3-small';
-
     public function __construct(
         public Message $message
     ) {}
@@ -25,7 +23,7 @@ class MessageEmbeddingJob implements ShouldQueue
     public function handle(Pinecone $pinecone, OpenAI $openai): void
     {
         $response = $openai->embeddings()->create([
-            'model' => self::MODEL,
+            'model' => config('services.openai.embedding_model'),
             'input' => $this->message->content,
         ]);
 

@@ -1,6 +1,6 @@
 <?php
 
-use App\Http\Controllers\{ReactionController, ChannelController, MessageController, ProfileController, UserController};
+use App\Http\Controllers\{ReactionController, ChannelController, MessageController, ProfileController, UserController, SearchController};
 use Illuminate\Support\Facades\Route;
 use Illuminate\Foundation\Application;
 use Inertia\Inertia;
@@ -34,6 +34,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::post('/reactions/{message}', [ReactionController::class, 'store'])->name('reactions.store');
     Route::delete('/reactions/{message}', [ReactionController::class, 'destroy'])->name('reactions.destroy');
+
+    Route::get('/search', [SearchController::class, 'search'])->middleware(['auth']);
 });
+
 
 require __DIR__.'/auth.php';

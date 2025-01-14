@@ -37,6 +37,7 @@ return [
 
     'openai' => [
         'api_key' => env('OPENAI_API_KEY'),
+        'embedding_model' => env('OPENAI_EMBEDDING_MODEL'),
     ],
 
     'pinecone' => [
