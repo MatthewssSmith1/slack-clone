@@ -92,21 +92,26 @@ const createMessagesStore = (isThread: boolean) => create<MessagesState>((set, g
                 messages: state.messages.map(msg => {
                     if (msg.id !== messageId) return msg;
 
+                    if (emojiCode === '') {
+                        return {
+                            ...msg,
+                            reactions: msg.reactions.map(reaction => ({
+                                ...reaction,
+                                userIds: reaction.userIds.filter(id => id !== userId)
+                            })).filter(reaction => reaction.userIds.length > 0)
+                        };
+                    }
+
                     const reactions = [...(msg.reactions || [])];
                     const existingReaction = reactions.find(r => r.emoji === emojiCode);
 
-                    if (emojiCode === '') {
-                        const updatedReactions = reactions.map(reaction => ({
-                            ...reaction,
-                            userIds: reaction.userIds.filter(id => id !== userId)
-                        })).filter(reaction => reaction.userIds.length > 0);
-                        return { ...msg, reactions: updatedReactions };
-                    }
-
                     if (!existingReaction) {
-                        reactions.push({ emoji: emojiCode, userIds: [userId] });
+                        reactions.push({
+                            emoji: emojiCode,
+                            userIds: [userId]
+                        });
                     } else if (!existingReaction.userIds.includes(userId)) {
-                        existingReaction.userIds.push(userId);
+                        existingReaction.userIds = [...existingReaction.userIds, userId];
                     }
 
                     return { ...msg, reactions };

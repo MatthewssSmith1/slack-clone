@@ -2,12 +2,11 @@ import { useEffect, useRef, useCallback } from 'react';
 import { StoreApi, UseBoundStore } from 'zustand';
 import { MessagesState } from '@/stores/messageStores';
 import MessageInput from '@/Components/MessageInput';
-import EmojiPicker from '@/Components/EmojiPicker';
 import { Loader2 } from 'lucide-react';
 import MessageView from './MessageView';
-import { Message } from '@/types/slack';
 import { cn } from '@/lib/utils';
 import { useWorkspaceStore } from '@/stores/workspaceStore';
+import { useEmojiPickerStore } from '@/stores/emojiPickerStore';
 
 interface ChatViewProps {
     useStore: UseBoundStore<StoreApi<MessagesState>>;
@@ -15,7 +14,8 @@ interface ChatViewProps {
 }
 
 export default function ChatView({ useStore, className }: ChatViewProps) {
-    const { isThread, messages, instantScroll, setInstantScroll, setScrollContainer, updateReaction, addMessage } = useStore();
+    const { isThread, messages, instantScroll, setInstantScroll, setScrollContainer, addMessage } = useStore();
+    const { close } = useEmojiPickerStore();
 
     const scrollContainer = useRef<HTMLDivElement>(null);    
 
@@ -23,7 +23,6 @@ export default function ChatView({ useStore, className }: ChatViewProps) {
     useEffect(() => {
         if (!messages || !scrollContainer.current) return;
 
-        // Scroll to bottom (newest messages) when messages first load
         if (instantScroll) {
             scrollContainer.current
                 ?.querySelector('.message:first-child')
@@ -36,12 +35,11 @@ export default function ChatView({ useStore, className }: ChatViewProps) {
     const parentId = isThread ? messages?.at(-1)?.id : undefined;
 
     return (
-        <article className={cn("row-start-2 grid grid-rows-[1fr_auto] overflow-hidden bg-muted", className)}>
-            <main ref={scrollContainer} className="overflow-y-auto bg-panel py-4 relative flex flex-col">
+        <article className={cn("row-start-2 grid grid-rows-[1fr_auto] overflow-hidden bg-muted", className)} onMouseDown={close}>
+            <main ref={scrollContainer} onScroll={close} className="overflow-y-auto bg-panel py-4 relative flex flex-col">
                 <ScrollRegion useStore={useStore} />
             </main>
             <MessageInput addMessage={addMessage} parentId={parentId} isThread={isThread} />
-            <EmojiPicker updateReaction={updateReaction} />
         </article>
     );
 }

@@ -29,8 +29,8 @@ export default function MessageInput({ addMessage, parentId, isThread }: Props) 
         if (!content) return;
 
         try {
-            const response = await axios.post(route('messages.store'), { content, channelId, parentId });
             setMessage('');
+            const response = await axios.post(route('messages.store'), { content, channelId, parentId });
             addMessage(response.data, true);
         } catch (error) {
             console.error('Failed to send message:', error);

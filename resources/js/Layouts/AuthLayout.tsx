@@ -1,24 +1,31 @@
 import { PropsWithChildren, useEffect } from 'react';
 import { useWorkspaceStore } from '@/stores/workspaceStore';
-import { useThreadStore } from '@/stores/messageStores';
+import { useThreadStore, useChannelStore } from '@/stores/messageStores';
 import { useUserStore } from '@/stores/userStore';
 import SidebarHeader from '@/Components/SidebarHeader';
 import ChannelHeader from '@/Components/ChannelHeader';
 import ThreadHeader from '@/Components/ThreadHeader';
+import EmojiPicker from '@/Components/EmojiPicker';
 import Sidebar from '@/Components/Sidebar';
 import { cn } from '@/lib/utils';
 
 export default function AuthLayout({ children }: PropsWithChildren) {
     const { fetchChannels } = useWorkspaceStore();
     const { fetchUsers } = useUserStore();
-    const { messages } = useThreadStore();
+    const { messages: threadMessages, updateReaction: updateThreadReaction } = useThreadStore();
+    const { updateReaction: updateChannelReaction } = useChannelStore();
 
-    const threadOpen = messages !== null;
+    const threadOpen = threadMessages !== null;
 
     useEffect(() => {
         fetchChannels()
         fetchUsers()
     }, []);
+
+    const handleReactionUpdate = (messageId: number, userId: number, emojiCode: string) => {
+        updateChannelReaction(messageId, userId, emojiCode);
+        updateThreadReaction(messageId, userId, emojiCode);
+    };
 
     return (
         <div className={cn(
@@ -32,6 +39,7 @@ export default function AuthLayout({ children }: PropsWithChildren) {
             <ThreadHeader />
             <Sidebar />
             {children}
+            <EmojiPicker updateReaction={handleReactionUpdate} />
         </div>
     );
 }

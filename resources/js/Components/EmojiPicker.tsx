@@ -23,32 +23,22 @@ export default function EmojiPicker({ updateReaction }: Props) {
   const panelRef = useRef<HTMLDivElement>(null)
   const [emoji, setEmoji] = useState<string | null>(null)
 
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (panelRef.current && !panelRef.current.contains(event.target as Node)) {
-        close()
-      }
-    }
-    document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [close])
-
   if (!position || !targetMessage || !user) return null
 
   const submitEmoji = async () => {
     if (!emoji) return;
 
     try {
+      updateReaction(targetMessage.id, user.id, emoji);
+      close();
       await axios.post(route('reactions.store', { message: targetMessage.id }), {
         emoji_code: emoji,
       });
-      updateReaction(targetMessage.id, user.id, emoji);
       setEmoji(null);
     } catch (error) {
       console.error('Failed to add reaction:', error);
-    } finally {
       close();
-    }
+    } 
   };
 
   return (
