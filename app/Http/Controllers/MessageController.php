@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Channel;
 use App\Models\Message;
+use App\Jobs\MessageEmbeddingJob;
 use Illuminate\Http\{JsonResponse, Request};
 use Illuminate\Support\Facades\{Auth, DB, Log};
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
@@ -95,6 +96,8 @@ class MessageController extends Controller
         ]);
 
         broadcast(new \App\Events\MessagePosted($message));
+        
+        MessageEmbeddingJob::dispatch($message);
 
         return $message->load('user:id,name,profile_picture');
     }

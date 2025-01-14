@@ -66,6 +66,8 @@ console_command = 'php /var/www/html/artisan tinker'
   VITE_PUSHER_SCHEME = "${PUSHER_SCHEME}"
   VITE_PUSHER_APP_CLUSTER = "${PUSHER_APP_CLUSTER}"
 
+  PINECONE_INDEX = 'slacking-off'
+
 [http_service]
   internal_port = 8080
   force_https = true

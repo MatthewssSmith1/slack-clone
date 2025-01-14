@@ -21,7 +21,7 @@ class DatabaseSeeder extends Seeder
             $channel->users()->attach($users->pluck('id'));
             
             Message::factory()
-                ->count(rand(30,40))
+                ->count(rand(75,100))
                 ->sequence(fn ($sequence) => [
                     'channel_id' => $channel->id,
                     'user_id' => $users->random()->id,
@@ -30,7 +30,7 @@ class DatabaseSeeder extends Seeder
         });
 
         // Create direct message channels between random pairs of users
-        $userPairs = $this->generateRandomUserPairs($users, 20);
+        $userPairs = $this->generateRandomUserPairs($users, 25);
         
         foreach ($userPairs as $pair) {
             $dmChannel = Channel::factory()
@@ -42,7 +42,7 @@ class DatabaseSeeder extends Seeder
             $dmChannel->users()->attach($pair->pluck('id'));
             
             Message::factory()
-                ->count(rand(25,35))
+                ->count(rand(20,40))
                 ->sequence(fn ($sequence) => [
                     'channel_id' => $dmChannel->id,
                     'user_id' => $pair[$sequence->index % 2]->id,
