@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
 export function SkeletonOption() {
-    return <div className="animate-pulse h-9 mt-1 w-full bg-muted rounded-md"></div>;
+    return <div className="animate-pulse h-9 mt-1 w-full bg-muted rounded-md select-none"></div>;
 }
 
 export default function ChannelOption({ channel, isCurrent }: { channel: Channel; isCurrent: boolean }) {

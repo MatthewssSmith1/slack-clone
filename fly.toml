@@ -10,7 +10,7 @@ console_command = 'php /var/www/html/artisan tinker'
 [build]
   [build.args]
     NODE_VERSION = '18'
-    PHP_VERSION = '8.2'
+    PHP_VERSION = '8.3'
 
 [env]
   APP_NAME = 'SlackingOff'
@@ -63,6 +63,8 @@ console_command = 'php /var/www/html/artisan tinker'
   VITE_PUSHER_PORT = "${PUSHER_PORT}"
   VITE_PUSHER_SCHEME = "${PUSHER_SCHEME}"
   VITE_PUSHER_APP_CLUSTER = "${PUSHER_APP_CLUSTER}"
+
+  OPENAI_EMBEDDING_MODEL = 'text-embedding-3-small' 
 
   PINECONE_INDEX = 'slacking-off'
 
