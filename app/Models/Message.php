@@ -13,9 +13,6 @@ class Message extends Model
 {
     use SoftDeletes, HasFactory;
 
-    public const CHUNK_SIZE = 50;
-    public const RECENT_THRESHOLD_MINUTES = 5;
-
     protected $with = [
         'user',
     ];

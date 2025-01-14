@@ -1,7 +1,7 @@
-import { useMessagesWebsocket } from '@/hooks/use-messages-websocket';
 import { useChannelStore, useThreadStore } from '@/stores/messageStores';
-import ChatView from '@/Components/ChatView';
+import { useMessagesWebsocket } from '@/hooks/use-messages-websocket';
 import AuthLayout from '@/Layouts/AuthLayout';
+import ChatView from '@/Components/ChatView';
 
 export default function Dashboard() {
     useMessagesWebsocket();

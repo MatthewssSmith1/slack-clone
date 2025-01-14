@@ -36,13 +36,11 @@ class Channel extends Model
 
     public function users(): BelongsToMany
     {
-        return $this->belongsToMany(User::class)
-            ->withTimestamps();
+        return $this->belongsToMany(User::class);
     }
 
     public function messages(): HasMany
     {
-        return $this->hasMany(Message::class)
-            ->orderBy('created_at', 'asc');
+        return $this->hasMany(Message::class);
     }
 }

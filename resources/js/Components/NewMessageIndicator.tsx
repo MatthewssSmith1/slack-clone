@@ -1,6 +1,6 @@
 import { useChannelStore } from '@/stores/messageStores';
 import { ChevronDown } from 'lucide-react';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
 export default function NewMessageIndicator() {
     const { showIndicator, setIndicator, scrollContainer, messages } = useChannelStore();
@@ -12,11 +12,10 @@ export default function NewMessageIndicator() {
         setIndicator(false);
     };
 
-    useEffect(() => {
-        // flex-col-reverse affects scrollTop; this represents distance scroll up from the bottom
-        if (!scrollContainer?.current || scrollContainer.current.scrollTop < -150) return;
-        scrollToBottom();
-    }, [messages]);
+    // useEffect(() => {
+    //     if (!scrollContainer?.current || scrollContainer.current.scrollTop < -150) return;
+    //     scrollToBottom();
+    // }, [messages]);
 
     if (!showIndicator) return null;
 

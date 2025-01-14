@@ -22,8 +22,9 @@ export interface Message {
     content: string;
     user: User;
     created_at: string;
-    isContinuation?: boolean;
     reactions: Reaction[];
+    isContinuation?: boolean;
+    parent_id?: number;
 }
 
 export interface Reaction {
