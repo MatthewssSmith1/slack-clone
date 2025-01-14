@@ -1,6 +1,6 @@
 import { useRef, useState, useEffect } from 'react'
 import { useEmojiPickerStore } from '@/stores/emojiPickerStore'
-import { ChannelState } from '@/stores/channelStore'
+import { MessagesState } from '@/stores/messageStores'
 import { useAuth } from '@/hooks/use-auth'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
@@ -14,7 +14,7 @@ const COMMON_EMOJIS = [
 ]
 
 interface Props {
-  updateReaction: ChannelState['updateReaction']
+  updateReaction: MessagesState['updateReaction']
 }
 
 export default function EmojiPicker({ updateReaction }: Props) {
@@ -42,7 +42,7 @@ export default function EmojiPicker({ updateReaction }: Props) {
       await axios.post(route('reactions.store', { message: targetMessage.id }), {
         emoji_code: emoji,
       });
-      updateReaction(targetMessage.id, user, emoji);
+      updateReaction(targetMessage.id, user.id, emoji);
       setEmoji(null);
     } catch (error) {
       console.error('Failed to add reaction:', error);
@@ -54,10 +54,11 @@ export default function EmojiPicker({ updateReaction }: Props) {
   return (
     <div
       ref={panelRef}
-      className="fixed flex flex-col p-2 items-center z-50 bg-popover rounded-md shadow-md border -translate-x-full"
+      className="fixed flex flex-col p-2 items-center z-50 bg-popover rounded-md shadow-md border"
       style={{
         left: `${position.x}px`,
         top: `${position.y}px`,
+        transform: `translateX(-100%) ${position.y > window.innerHeight / 2 ? 'translateY(-100%)' : ''}`
       }}
     >
       <div className="grid grid-cols-6 w-max">

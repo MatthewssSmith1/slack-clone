@@ -1,4 +1,4 @@
-import { useChannelStore } from '@/stores/channelStore';
+import { useChannelStore } from '@/stores/messageStores';
 import { ChevronDown } from 'lucide-react';
 import { useEffect } from 'react';
 

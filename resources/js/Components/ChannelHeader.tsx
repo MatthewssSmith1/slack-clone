@@ -1,6 +1,7 @@
+import { HeaderWrapper, HeaderTitle } from './Header';
+import { formatDMChannelName } from '@/lib/utils';
 import { useWorkspaceStore } from '@/stores/workspaceStore';
 import { UsersIcon, Hash } from 'lucide-react';
-import { formatDMChannelName } from '@/lib/utils';
 import { ChannelType } from '@/lib/utils';
 import { Suspense } from 'react';
 import { useAuth } from '@/hooks/use-auth';
@@ -27,18 +28,18 @@ function Content() {
     return (
         <>
             <Head title={`${currentChannel.channel_type === ChannelType.Direct ? '' : '#'}${displayName} | Slacking Off`} />
-            <nav className="col-start-2 row-start-1 flex items-center justify-between border-b border-border bg-card pl-4 pr-8">
-                <h1 className="text-xl font-semibold flex items-center gap-2 select-none">
+            <HeaderWrapper className="col-start-2">
+                <HeaderTitle>
                     {currentChannel.channel_type !== ChannelType.Direct && <ChannelPrefix />}
                     {displayName}
-                </h1>
+                </HeaderTitle>
 
                 <div className="grow" />
 
                 {currentChannel.channel_type !== ChannelType.Direct && (
                     <MemberCount count={userCount} />
                 )}
-            </nav>
+            </HeaderWrapper>
         </>
     );
 }

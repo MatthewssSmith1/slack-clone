@@ -1,46 +1,33 @@
 import { User as UserIcon, Reply, SmilePlus } from 'lucide-react';
 import { useEmojiPickerStore } from '@/stores/emojiPickerStore';
-import { useChannelStore } from '@/stores/channelStore';
+import { useThreadStore } from '@/stores/messageStores';
 import ReactionList from '@/Components/ReactionList';
 import { Message } from '@/types/slack';
 import { useAuth } from '@/hooks/use-auth';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import axios from 'axios';
+import { useWorkspaceStore } from '@/stores/workspaceStore';
 
 const TIME_FORMAT: Intl.DateTimeFormatOptions = {
     hour: 'numeric',
     minute: '2-digit'
 };
 
-export default function MessageView({ message }: { message: Message }) {
+export default function MessageView({ message, isThread }: { message: Message, isThread: boolean }) {
     const isContinuation = message.isContinuation;
     const { user } = useAuth();
-    const { updateReaction } = useChannelStore();
 
     if (!user) return null;
 
     const isCurrentUser = message.user.id === user.id;
 
-    const handleRemoveReaction = async () => {
-        const existingReaction = message.reactions.find(r => r.user.id === user.id);
-        if (!existingReaction) return;
-
-        try {
-            await axios.delete(route('reactions.destroy', { message: message.id }));
-            updateReaction(message.id, user, '');
-        } catch (error) {
-            console.error('Failed to remove reaction:', error);
-        }
-    };
-
     return (
         <div className="message flex items-start gap-3 px-4 py-1 group hover:bg-background relative">
             <div className={cn(
                 "w-8 mt-1.5",
-                isContinuation ? "h-2" : "h-8 rounded-full bg-muted flex items-center justify-center"
+                isContinuation ? "h-2 [&_svg]:hidden" : "h-8 rounded-full bg-muted flex items-center justify-center"
             )}>
-                {!isContinuation && <UserIcon className="h-4 w-4 text-muted-foreground" />}
+                <UserIcon className="size-4 text-muted-foreground" />
             </div>
             <div className="flex-1">
                 {!isContinuation && (
@@ -51,22 +38,15 @@ export default function MessageView({ message }: { message: Message }) {
                         </span>
                     </div> 
                 )}
-                <p className="text-sm text-foreground">
-                    {message.content}
-                </p>
-                <ReactionList 
-                    reactions={message.reactions}
-                    userId={user.id}
-                    message={message}
-                    onRemoveReaction={handleRemoveReaction}
-                />
+                <p className="text-sm text-foreground">{message.content}</p>
+                <ReactionList message={message} />
             </div>
-            {!isCurrentUser && (<MessageHoverMenu message={message} />)}
+            {!isCurrentUser && (<MessageHoverMenu message={message} isThread={isThread} />)}
         </div>
     );
 }
 
-function MessageHoverMenu({ message }: { message: Message }) {
+function MessageHoverMenu({ message, isThread }: { message: Message, isThread: boolean }) {
     const { open } = useEmojiPickerStore();
 
     const openEmojis = (e: React.MouseEvent<HTMLButtonElement>) => {
@@ -74,14 +54,23 @@ function MessageHoverMenu({ message }: { message: Message }) {
         open(message, { x: rect.left, y: rect.bottom });
     };
 
+    const { currentChannel } = useWorkspaceStore();
+    const { loadMessages } = useThreadStore();
+    const openThread = () => {
+        useThreadStore.setState({ messages: [{...message, isContinuation: false}] });
+        currentChannel && loadMessages(currentChannel.id, message.id);
+    };
+
     return (
         <div className="absolute right-4 top-1 opacity-0 group-hover:opacity-100 transition-opacity flex gap-0.5 bg-background border rounded-md shadow-sm [&_svg]:size-4">
             <Button variant="ghost" size="sm" className="h-7 px-2" aria-label="React" onClick={openEmojis}>
                 <SmilePlus />
             </Button>
-            <Button variant="ghost" size="sm" className="h-7 px-2" aria-label="Reply">
-                <Reply />
-            </Button>
+            {!isThread && (
+                <Button variant="ghost" size="sm" className="h-7 px-2" aria-label="Reply" onClick={openThread}>
+                    <Reply />
+                </Button>
+            )}
         </div>
     );
 } 

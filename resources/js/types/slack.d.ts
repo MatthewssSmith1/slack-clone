@@ -27,6 +27,6 @@ export interface Message {
 }
 
 export interface Reaction {
-    user: User;
-    emoji_code: string;
+    userIds: number[];
+    emoji: string;
 }

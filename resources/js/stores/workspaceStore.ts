@@ -1,5 +1,5 @@
 import { create, StateCreator } from 'zustand';
-import { useChannelStore } from '@/stores/channelStore';
+import { useChannelStore } from '@/stores/messageStores';
 import { Channel } from '@/types/slack';
 import axios from 'axios';
 

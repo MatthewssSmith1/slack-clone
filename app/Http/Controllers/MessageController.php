@@ -14,47 +14,60 @@ class MessageController extends Controller
 
     public function index(Request $request): JsonResponse
     {
-        $request->validate([
-            'channelId' => ['required', 'integer', 'exists:channels,id']
+        $validated = $request->validate([
+            'channelId' => ['required', 'integer', 'exists:channels,id'],
+            'parentId' => ['sometimes', 'integer', 'exists:messages,id']
         ]);
 
-        $channel = Channel::findOrFail($request->query('channelId'));
+        $channel = Channel::findOrFail($validated['channelId']);
 
         if (!$channel->users()->where('user_id', $request->user()->id)->exists()) {
             return response()->json(['error' => 'You do not have access to this channel.'], 403);
         }
 
-        // TODO: group reactions in php instead of sql
-        $messages = $channel->messages()
+        $query = $channel->messages()
             ->select('messages.*')
             ->with('user:id,name,profile_picture')
-            ->addSelect([
-                'reactions' => DB::table('reactions')
-                    ->select(DB::raw('json_group_array(json_object(
-                        \'user\', json_object(\'id\', users.id, \'name\', users.name),
-                        \'emoji_code\', reactions.emoji_code
-                    ))'))
-                    ->join('users', 'users.id', '=', 'reactions.user_id')
-                    ->whereColumn('reactions.message_id', 'messages.id')
-                    ->groupBy('reactions.message_id')
-            ])
-            ->latest()
-            ->get()
-            ->map(function ($message) {
-                $message->reactions = $message->reactions ? json_decode($message->reactions, true) : [];
-                return $message;
-            })
-            ->reverse()
-            ->values();
+            ->with(['reactions' => function ($query) {
+                $query->select('emoji_code', 'user_id', 'message_id');
+            }]);
 
-        return response()->json(['data' => ['messages' => $messages]]);
+        if (isset($validated['parentId'])) {
+            $parentId = $validated['parentId'];
+            $query->where(function($q) use ($parentId) {
+                $q->where('parent_id', $parentId)
+                  ->orWhere('id', $parentId);
+            });
+        } else {
+            $query->whereNull('parent_id');
+        }
+
+        $messages = $query->latest()->get();
+
+        $prevMsg = null;
+        foreach ($messages as $msg) {
+            $msg->isContinuation = $prevMsg && $msg->user_id === $prevMsg->user_id;
+            $prevMsg = $msg;
+
+            $msg->setRelation('reactions', 
+                collect($msg->reactions->groupBy('emoji_code'))->map(function ($group) {
+                    return [
+                        'emoji' => $group[0]->emoji_code,
+                        'userIds' => $group->pluck('user_id')->toArray(),
+                    ];
+                })->values()
+            );
+        }
+        
+        return response()->json(['data' => ['messages' => $messages->reverse()->values()]]);
     }
 
     public function store(Request $request)
     {
         $validated = $request->validate([
             'content' => ['required', 'string', 'max:2000'],
-            'channelId' => ['required', 'integer', 'exists:channels,id']
+            'channelId' => ['required', 'integer', 'exists:channels,id'],
+            'parentId' => ['sometimes', 'integer', 'exists:messages,id']
         ]);
 
         $channel = Channel::findOrFail($validated['channelId']);
@@ -66,6 +79,7 @@ class MessageController extends Controller
         $message = $channel->messages()->create([
             'content' => $validated['content'],
             'user_id' => Auth::id(),
+            'parent_id' => $validated['parentId'] ?? null
         ]);
 
         broadcast(new \App\Events\MessagePosted($message));

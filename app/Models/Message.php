@@ -16,7 +16,6 @@ class Message extends Model
     public const CHUNK_SIZE = 50;
     public const RECENT_THRESHOLD_MINUTES = 5;
 
-    /** @var list<string> */
     protected $with = [
         'user',
     ];
@@ -50,8 +49,6 @@ class Message extends Model
 
     public function reactions(): BelongsToMany
     {
-        return $this->belongsToMany(User::class, 'reactions')
-            ->withPivot('emoji_code')
-            ->withTimestamps();
+        return $this->belongsToMany(User::class, 'reactions')->withPivot('emoji_code');
     }
 }

@@ -1,5 +1,6 @@
 import { useMessagesWebsocket } from '@/hooks/use-messages-websocket';
-import ChannelView from '@/Components/ChannelView';
+import { useChannelStore, useThreadStore } from '@/stores/messageStores';
+import ChatView from '@/Components/ChatView';
 import AuthLayout from '@/Layouts/AuthLayout';
 
 export default function Dashboard() {
@@ -7,7 +8,8 @@ export default function Dashboard() {
 
     return (
         <AuthLayout>
-            <ChannelView />
+            <ChatView useStore={useChannelStore} />
+            <ChatView useStore={useThreadStore} />
         </AuthLayout>
     );
 } 

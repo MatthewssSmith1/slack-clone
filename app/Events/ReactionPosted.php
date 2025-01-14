@@ -17,9 +17,8 @@ class ReactionPosted implements ShouldBroadcast
 
     public function __construct(
         public Message $message,
-        public User $user,
-        public string $emoji_code,
-        public bool $removed = false
+        public int $userId,
+        public string $emoji_code
     ) {}
 
     /**
@@ -37,9 +36,8 @@ class ReactionPosted implements ShouldBroadcast
     {
         return [
             'message_id' => $this->message->id,
-            'user' => $this->user->only(['id', 'name', 'profile_picture']),
-            'emoji_code' => $this->emoji_code,
-            'removed' => $this->removed,
+            'user_id' => $this->userId,
+            'emoji_code' => $this->emoji_code
         ];
     }
 } 

@@ -1,20 +1,45 @@
-import { Bold, Italic, ALargeSmall, Code, Link as LinkIcon, Send, Plus, Strikethrough, List, ListOrdered, Quote, CodeSquare } from 'lucide-react';
 import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
-import { useNewMessageStore } from '@/stores/newMessageStore';
+import { ALargeSmall, Send, Plus } from 'lucide-react';
 import { useWorkspaceStore } from '@/stores/workspaceStore';
 import NewMessageIndicator from './NewMessageIndicator';
+import React, { useState } from 'react';
+import { MessagesState } from '@/stores/messageStores';
+import RichTextButtons from './RichTextButtons';
 import { ChannelType } from '@/lib/utils';
-import { Separator } from '@/components/ui/separator';
 import { Textarea } from '@/components/ui/textarea';
 import { useAuth } from '@/hooks/use-auth';
 import { Button } from '@/components/ui/button';
-import React from 'react';
+import axios from 'axios';
 
-export default function MessageInput() {
-    const { sendMessage } = useNewMessageStore();
+interface Props {
+    addMessage: MessagesState['addMessage'];
+    parentId?: number;
+    isThread: boolean;
+}
+
+export default function MessageInput({ addMessage, parentId, isThread }: Props) {
+    const [message, setMessage] = useState('');
+    const [showRichText, setShowRichText] = useState(false);
     const { currentChannel } = useWorkspaceStore();
 
     if (!currentChannel) return null;
+
+    async function sendMessage(channelId: number) {
+        const content = message.trim();
+        if (!content) return;
+
+        try {
+            const response = await axios.post(
+                route('messages.store'),
+                { content, channelId, parentId }
+            );
+            setMessage('');
+            addMessage(response.data, true);
+        } catch (error) {
+            console.error('Failed to send message:', error);
+            throw error;
+        }
+    }
 
     function onSubmit(e: React.FormEvent<HTMLFormElement>) {
         e.preventDefault();
@@ -25,38 +50,30 @@ export default function MessageInput() {
         <footer className="bg-background m-4 mt-0 rounded-md relative [&_button]:rounded-full">
             <NewMessageIndicator />
             <form onSubmit={onSubmit} className="border border-border rounded-md bg-card">
-                <RichTextButtons />
-                <InputArea />
-                <BottomButtonRow />
+                {showRichText && <RichTextButtons />}
+                <InputArea 
+                    message={message} 
+                    setMessage={setMessage} 
+                    sendMessage={sendMessage} 
+                    isThread={isThread}
+                />
+                <BottomButtonRow 
+                    message={message}
+                    showRichText={showRichText}
+                    setShowRichText={setShowRichText}
+                />
             </form>
         </footer>
     );
 }
 
-function RichTextButtons() {
-    const { showRichText } = useNewMessageStore();
-    if (!showRichText) return null;
-
-    return (
-        <div className="flex items-center gap-1 p-2 [&>button]:h-8 [&>button]:w-8 [&>button]:p-0 [&_svg]:h-4 [&_svg]:w-4">
-            <Button type="button" variant="ghost" size="sm" aria-label="Bold">           <Bold />          </Button>
-            <Button type="button" variant="ghost" size="sm" aria-label="Italic">         <Italic />        </Button>
-            <Button type="button" variant="ghost" size="sm" aria-label="Strikethrough">  <Strikethrough /> </Button>
-            <Separator orientation="vertical" className="h-5 mx-1" />
-            <Button type="button" variant="ghost" size="sm" aria-label="Link">           <LinkIcon />      </Button>
-            <Button type="button" variant="ghost" size="sm" aria-label="Ordered List">   <ListOrdered />   </Button>
-            <Button type="button" variant="ghost" size="sm" aria-label="Unordered List"> <List />          </Button>
-            <Separator orientation="vertical" className="h-5 mx-1" />
-            <Button type="button" variant="ghost" size="sm" aria-label="Block Quote">    <Quote />         </Button>
-            <Button type="button" variant="ghost" size="sm" aria-label="Code">           <Code />          </Button>
-            <Button type="button" variant="ghost" size="sm" aria-label="Code Square">    <CodeSquare />    </Button>
-        </div>
-    );
+interface BottomButtonRowProps {
+    message: string;
+    showRichText: boolean;
+    setShowRichText: (show: boolean) => void;
 }
 
-function BottomButtonRow() {
-    const { message, showRichText, setShowRichText } = useNewMessageStore();
-
+function BottomButtonRow({ message, showRichText, setShowRichText }: BottomButtonRowProps) {
     return (
         <div className="flex p-2">
             <TooltipProvider>
@@ -102,14 +119,22 @@ function BottomButtonRow() {
     );
 }
 
-function InputArea() {
-    const { message, setMessage, sendMessage } = useNewMessageStore();
+interface InputAreaProps {
+    message: string;
+    setMessage: (message: string) => void;
+    sendMessage: (channelId: number) => Promise<void>;
+    isThread: boolean;
+}
+
+function InputArea({ message, setMessage, sendMessage, isThread }: InputAreaProps) {
     const { currentChannel } = useWorkspaceStore();
     const { user } = useAuth();
 
     let placeholder = '';
 
-    if (currentChannel && user) {
+    if (isThread) {
+        placeholder = 'Reply...';
+    } else if (currentChannel && user) {
         if (currentChannel.channel_type === ChannelType.Direct) {
             const otherUsers = currentChannel.name
                 .split(', ')

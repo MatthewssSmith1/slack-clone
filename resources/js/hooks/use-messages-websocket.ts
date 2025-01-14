@@ -1,8 +1,14 @@
-import { useChannelStore } from '@/stores/channelStore';
+import { useChannelStore } from '@/stores/messageStores';
 import { useWorkspaceStore } from '@/stores/workspaceStore';
 import { useEffect } from 'react';
 import { useAuth } from '@/hooks/use-auth';
-import { Message, User } from '@/types/slack';
+import { Message } from '@/types/slack';
+
+interface ReactionPostedEvent {
+    message_id: number;
+    user_id: number;
+    emoji_code: string;
+}
 
 export function useMessagesWebsocket() {
     const { currentChannel } = useWorkspaceStore();
@@ -10,7 +16,7 @@ export function useMessagesWebsocket() {
     const store = useChannelStore();
 
     useEffect(() => {
-        if (!currentChannel) return;
+        if (!currentChannel || !user) return;
         
         const channelId = `channel.${currentChannel.id}`;
         window.Echo?.leave(channelId);
@@ -20,20 +26,9 @@ export function useMessagesWebsocket() {
                 if (message.user.id !== user.id) 
                     store.addMessage(message, false);
             })
-            .listen('ReactionPosted', ({ 
-                message_id, 
-                user: reactionUser, 
-                emoji_code, 
-                removed 
-            }: { 
-                message_id: number;
-                user: User;
-                emoji_code: string;
-                removed: boolean;
-            }) => {
-                if (reactionUser.id !== user.id) {
-                    store.updateReaction(message_id, reactionUser, emoji_code);
-                }
+            .listen('ReactionPosted', ({ message_id, user_id, emoji_code }: ReactionPostedEvent) => {
+                if (user_id !== user.id) 
+                    store.updateReaction(message_id, user_id, emoji_code);
             });
 
         return () => window.Echo?.leave(channelId);

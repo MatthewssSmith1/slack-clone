@@ -15,46 +15,25 @@ class ReactionController extends Controller
             'emoji_code' => ['required', 'string', 'max:8'],
         ]);
 
-        $message->reactions()->detach(auth()->id());
-        
-        $message->reactions()->attach(auth()->id(), [
-            'emoji_code' => $validated['emoji_code'],
-        ]);
-
         $user = auth()->user();
 
-        broadcast(new ReactionPosted(
-            $message,
-            $user,
-            $validated['emoji_code']
-        ))->toOthers();
-
-        return response()->json([
-            'message_id' => $message->id,
-            'user' => $user->only(['id', 'name', 'profile_picture']),
+        $message->reactions()->detach($user->id);
+        $message->reactions()->attach($user->id, [
             'emoji_code' => $validated['emoji_code'],
-            'removed' => false,
         ]);
+
+        broadcast(new ReactionPosted($message, $user->id, $validated['emoji_code']))->toOthers();
+
+        return response()->json([], 200);
     }
 
     public function destroy(Message $message): JsonResponse
     {
-        $message->reactions()->detach(auth()->id());
-        
         $user = auth()->user();
+        $message->reactions()->detach($user->id);
 
-        broadcast(new ReactionPosted(
-            $message,
-            $user,
-            '', // Empty emoji code for removal
-            true
-        ))->toOthers();
+        broadcast(new ReactionPosted($message, $user->id, ''))->toOthers();
 
-        return response()->json([
-            'message_id' => $message->id,
-            'user' => $user->only(['id', 'name', 'profile_picture']),
-            'emoji_code' => '',
-            'removed' => true,
-        ]);
+        return response()->json([], 200);
     }
 } 

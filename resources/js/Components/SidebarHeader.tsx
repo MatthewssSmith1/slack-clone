@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 export default function SidebarHeader() {
     return (
         <>
-            <Dropdown as="nav" className="col-start-1 row-start-1 px-2 py-1 border-b border-r border-border bg-card">
+            <Dropdown as="nav" className="col-start-1 row-start-1 px-2 py-1 bg-card">
                 <Trigger />
                 <Content />
             </Dropdown>

@@ -13,7 +13,7 @@ export default function Sidebar() {
         <>
             <ScrollArea 
                 as="aside" 
-                className="col-start-1 row-start-2 flex flex-col items-stretch gap-6 border-r border-border bg-card"
+                className="col-start-1 row-start-2 flex flex-col items-stretch gap-6 border-t border-r border-border bg-card"
             >
                 <SidebarSection 
                     title="Channels" 

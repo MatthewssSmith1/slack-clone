@@ -14,7 +14,6 @@ class ChannelController extends Controller
     {
         $user = Auth::user();
         $channels = $user->channels()
-            // ->withCount('users')
             ->with(['messages.user'])
             ->select('channels.*')
             ->with(['users' => function($query) use ($user) {
