@@ -44,9 +44,11 @@ const createMessagesStore = (isThread: boolean) => create<MessagesState>((set, g
         });
 
         try {
-            const params = { channelId, parentId, ...(cursor && { cursor }) };
-            const response = await axios.get(route('messages.index', params));
+            const params = { parentId, ...(cursor && { cursor }) };
+            const response = await axios.get(route('messages.index', { channel: channelId, ...params }));
             const { nextCursor, messages } = response.data;
+
+            console.log(messages);
 
             set((state) => {
                 const newMessages = cursor && state.messages ? [...state.messages, ...messages] : messages;
@@ -69,7 +71,7 @@ const createMessagesStore = (isThread: boolean) => create<MessagesState>((set, g
             if (!state.messages) return state;
 
             const [prevMessage] = state.messages;
-            message.isContinuation = prevMessage ? message.user.id === prevMessage.user.id : false;
+            message.is_continuation = prevMessage ? message.user.id === prevMessage.user.id : false;
 
             return {
                 messages: [message, ...state.messages],

@@ -44,7 +44,7 @@ console_command = 'php /var/www/html/artisan tinker'
   SESSION_DOMAIN = 'null'
 
   BROADCAST_CONNECTION = 'pusher'
-  FILESYSTEM_DISK = 'local'
+  FILESYSTEM_DISK = 's3'
   QUEUE_CONNECTION = 'database'
 
   CACHE_STORE = 'database'

@@ -4,7 +4,7 @@ import { Separator } from '@/components/ui/separator';
 
 export default function RichTextButtons() {
     return (
-        <div className="flex items-center gap-1 p-2 [&>button]:h-8 [&>button]:w-8 [&>button]:p-0 [&_svg]:h-4 [&_svg]:w-4">
+        <div className="flex items-center gap-1 p-2 border-border/50 border-b [&>button]:h-8 [&>button]:w-8 [&>button]:p-0 [&_svg]:h-4 [&_svg]:w-4">
             <Button type="button" variant="ghost" size="sm" aria-label="Bold">           <Bold />          </Button>
             <Button type="button" variant="ghost" size="sm" aria-label="Italic">         <Italic />        </Button>
             <Button type="button" variant="ghost" size="sm" aria-label="Strikethrough">  <Strikethrough /> </Button>

@@ -6,7 +6,8 @@ use App\Models\Channel;
 use App\Models\Message;
 use App\Jobs\MessageEmbeddingJob;
 use Illuminate\Http\{JsonResponse, Request};
-use Illuminate\Support\Facades\{Auth, DB, Log};
+use Illuminate\Support\Facades\{Auth, DB, Log, Storage};
+use Illuminate\Validation\Rules\File;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 
 class MessageController extends Controller
@@ -15,20 +16,16 @@ class MessageController extends Controller
     
     public const CHUNK_SIZE = 50;
 
-    public function index(Request $request): JsonResponse
+    public function index(Request $request, Channel $channel): JsonResponse
     {
         $validated = $request->validate([
-            'channelId' => ['required', 'integer', 'exists:channels,id'],
             'parentId' => ['sometimes', 'integer', 'exists:messages,id'],
             'cursor' => ['sometimes', 'integer', 'min:0']
         ]);
 
-        $channel = Channel::findOrFail($validated['channelId']);
+        $this->authorize('view', $channel);
 
-        if (!$channel->users()->where('user_id', $request->user()->id)->exists()) {
-            return response()->json(['error' => 'You do not have access to this channel.'], 403);
-        }
-
+        // TODO: select only needed columns (get data from userStore with user_id instead of including related user)
         $query = $channel->messages()
             ->select('messages.*')
             ->with('user:id,name,profile_picture')
@@ -52,7 +49,7 @@ class MessageController extends Controller
 
         $prevMsg = null;
         foreach ($messages as $msg) {
-            $msg->isContinuation = $prevMsg && $msg->user_id === $prevMsg->user_id;
+            $msg['is_continuation'] = $prevMsg && $msg->user_id === $prevMsg->user_id;
             $prevMsg = $msg;
 
             $msg->setRelation('reactions', 
@@ -64,7 +61,7 @@ class MessageController extends Controller
                 })->values()
             );
         }
-        if ($prevMsg) $prevMsg->isContinuation = false;
+        if ($prevMsg) $prevMsg['is_continuation'] = false;
 
         $nextCursor = $messages->count() === self::CHUNK_SIZE 
             ? $messages->last()->created_at->timestamp : null;
@@ -75,25 +72,30 @@ class MessageController extends Controller
         ]);
     }
 
-    public function store(Request $request)
+    public function store(Request $request, Channel $channel)
     {
+        $this->authorize('view', $channel);
+
         $validated = $request->validate([
-            'content' => ['required', 'string', 'max:2000'],
-            'channelId' => ['required', 'integer', 'exists:channels,id'],
-            'parentId' => ['sometimes', 'integer', 'exists:messages,id']
+            'content' => ['sometimes', 'string', 'max:2000'],
+            'parentId' => ['sometimes', 'integer', 'exists:messages,id'],
+            'attachment' => ['sometimes', File::default()->max('10mb') ]
         ]);
 
-        $channel = Channel::findOrFail($validated['channelId']);
-        
-        if (!$channel->users()->where('user_id', $request->user()->id)->exists()) {
-            return response()->json(['error' => 'You do not have access to this channel.'], 403);
+        $fields = [
+            'user_id' => Auth::id(),
+            'content' => $validated['content'] ?? '',
+            'parent_id' => $validated['parentId'] ?? null,
+        ];
+
+        if (isset($validated['attachment']) && $validated['attachment']) {
+            $file = $validated['attachment'];
+
+            $fields['attachment_name'] = $file->getClientOriginalName();
+            $fields['attachment_path'] = Storage::putFile('attachments', $file);
         }
 
-        $message = $channel->messages()->create([
-            'content' => $validated['content'],
-            'user_id' => Auth::id(),
-            'parent_id' => $validated['parentId'] ?? null
-        ]);
+        $message = $channel->messages()->create($fields);
 
         broadcast(new \App\Events\MessagePosted($message));
         

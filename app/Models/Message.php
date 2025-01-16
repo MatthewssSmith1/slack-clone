@@ -22,6 +22,8 @@ class Message extends Model
         'channel_id',
         'parent_id',
         'content',
+        'attachment_path',
+        'attachment_name',
     ];
 
     public function user(): BelongsTo

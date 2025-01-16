@@ -1,8 +1,9 @@
 import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
+import { FileUpload, FileWithPreview } from '@/components/ui/file-upload';
+import React, { useMemo, useState } from 'react';
 import { ALargeSmall, Send, Plus } from 'lucide-react';
 import { useWorkspaceStore } from '@/stores/workspaceStore';
 import NewMessageIndicator from './NewMessageIndicator';
-import React, { useState } from 'react';
 import { MessagesState } from '@/stores/messageStores';
 import RichTextButtons from './RichTextButtons';
 import { ChannelType } from '@/lib/utils';
@@ -18,19 +19,37 @@ interface Props {
 }
 
 export default function MessageInput({ addMessage, parentId, isThread }: Props) {
-    const [message, setMessage] = useState('');
-    const [showRichText, setShowRichText] = useState(false);
     const { currentChannel } = useWorkspaceStore();
+    const [showRichText, setShowRichText] = useState(false);
+    const [showFileUpload, setShowFileUpload] = useState(false);
+
+    const [message, setMessage] = useState<string>('');
+    const [attachment, setAttachment] = useState<FileWithPreview | null>(null);
+    const canSendMessage = useMemo(
+        () => message.trim() !== '' || attachment !== null, 
+        [message, attachment]
+    );
 
     if (!currentChannel) return null;
 
-    async function sendMessage(channelId: number) {
+    async function sendMessage() {
+        if (!canSendMessage || !currentChannel) return;
+
         const content = message.trim();
-        if (!content) return;
+        
+        const formData = new FormData();
+        if (content.length > 0) formData.append('content', content);
+        if (parentId) formData.append('parentId', parentId.toString());
+        if (attachment) formData.append('attachment', attachment);
+
+        setMessage('');
+        setAttachment(null);
+        setShowFileUpload(false);
 
         try {
-            setMessage('');
-            const response = await axios.post(route('messages.store'), { content, channelId, parentId });
+            const response = await axios.post(route('messages.store', { channel: currentChannel.id }), formData, {
+                headers: { 'Content-Type': 'multipart/form-data' }
+            });
             addMessage(response.data, true);
         } catch (error) {
             console.error('Failed to send message:', error);
@@ -39,24 +58,34 @@ export default function MessageInput({ addMessage, parentId, isThread }: Props) 
 
     function onSubmit(e: React.FormEvent<HTMLFormElement>) {
         e.preventDefault();
-        currentChannel && sendMessage(currentChannel.id);
+        sendMessage();
     }
+
+    const handleFilesUploaded = (files: FileWithPreview | FileWithPreview[] | null) => {
+        if (!files) return;
+        const file = Array.isArray(files) ? files[0] : files;
+        setAttachment(file);
+    };
 
     return (
         <footer className="bg-background m-4 mt-0 rounded-md relative [&_button]:rounded-full">
             <NewMessageIndicator />
             <form onSubmit={onSubmit} className="border border-border rounded-md bg-card">
                 {showRichText && <RichTextButtons />}
-                <InputArea 
-                    message={message} 
-                    setMessage={setMessage} 
-                    sendMessage={sendMessage} 
+                <InputArea
+                    message={message}
+                    setMessage={setMessage}
+                    sendMessage={sendMessage}
                     isThread={isThread}
                 />
-                <BottomButtonRow 
+                {showFileUpload && <FileUpload onFilesUploaded={handleFilesUploaded} />}
+                <BottomButtonRow
                     message={message}
                     showRichText={showRichText}
                     setShowRichText={setShowRichText}
+                    showFileUpload={showFileUpload}
+                    setShowFileUpload={setShowFileUpload}
+                    canSendMessage={canSendMessage}
                 />
             </form>
         </footer>
@@ -67,15 +96,24 @@ interface BottomButtonRowProps {
     message: string;
     showRichText: boolean;
     setShowRichText: (show: boolean) => void;
+    showFileUpload: boolean;
+    setShowFileUpload: (show: boolean) => void;
+    canSendMessage: boolean;
 }
 
-function BottomButtonRow({ message, showRichText, setShowRichText }: BottomButtonRowProps) {
+function BottomButtonRow({ message, showRichText, setShowRichText, showFileUpload, setShowFileUpload, canSendMessage }: BottomButtonRowProps) {
     return (
-        <div className="flex p-2">
+        <div className="flex p-2 border-border/50 border-t">
             <TooltipProvider>
                 <Tooltip>
                     <TooltipTrigger asChild>
-                        <Button type="button" size="sm" variant="ghost" className="h-8 w-8 p-0">
+                        <Button
+                            type="button"
+                            size="sm"
+                            variant="ghost"
+                            className="h-8 w-8 p-0"
+                            onClick={() => setShowFileUpload(!showFileUpload)}
+                        >
                             <Plus className="h-4 w-4" />
                             <span className="sr-only">Attach file</span>
                         </Button>
@@ -102,12 +140,12 @@ function BottomButtonRow({ message, showRichText, setShowRichText }: BottomButto
             <TooltipProvider>
                 <Tooltip>
                     <TooltipTrigger asChild>
-                        <Button type="submit" disabled={message.trim().length === 0} size="sm" variant="ghost" className="h-8 w-8 p-0">
+                        <Button type="submit" disabled={!canSendMessage} size="sm" variant="ghost" className="h-8 w-8 p-0">
                             <Send className="h-4 w-4" />
                         </Button>
                     </TooltipTrigger>
                     <TooltipContent>
-                        <p>Send</p>
+                        <p>Send message</p>
                     </TooltipContent>
                 </Tooltip>
             </TooltipProvider>
@@ -118,7 +156,7 @@ function BottomButtonRow({ message, showRichText, setShowRichText }: BottomButto
 interface InputAreaProps {
     message: string;
     setMessage: (message: string) => void;
-    sendMessage: (channelId: number) => Promise<void>;
+    sendMessage: () => Promise<void>;
     isThread: boolean;
 }
 
@@ -147,12 +185,12 @@ function InputArea({ message, setMessage, sendMessage, isThread }: InputAreaProp
             placeholder={placeholder}
             onChange={(e) => setMessage(e.target.value)}
             onKeyDown={(e) => {
-                if (e.key !== 'Enter' || e.shiftKey) return;
-                e.preventDefault();
-                if (!message.trim() || !currentChannel) return;
-                sendMessage(currentChannel.id);
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    sendMessage();
+                }
             }}
-            className="min-h-[100px] resize-none border-0 focus-visible:ring-0 rounded-none px-3 py-[10px]"
+            className="min-h-[100px] resize-none border-0 shadow-none focus-visible:ring-0 rounded-none px-3 py-[10px]"
         />
     );
 } 

@@ -14,6 +14,8 @@ return new class extends Migration
             $table->foreignId('channel_id')->constrained()->cascadeOnDelete();
             $table->foreignId('parent_id')->nullable()->constrained('messages')->nullOnDelete();
             $table->text('content');
+            $table->string('attachment_path')->nullable();
+            $table->string('attachment_name')->nullable();
             $table->softDeletes();
             $table->timestamps();
         });

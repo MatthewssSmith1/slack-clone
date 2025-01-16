@@ -23,8 +23,9 @@ export interface Message {
     user: User;
     created_at: string;
     reactions: Reaction[];
-    isContinuation?: boolean;
+    is_continuation?: boolean;
     parent_id?: number;
+    attachment_name?: string;
 }
 
 export interface Reaction {

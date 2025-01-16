@@ -7,29 +7,27 @@ use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Collection;
 use Probots\Pinecone\Client as Pinecone;
 use Illuminate\Http\Request;
-use OpenAI\Client as OpenAI;
 use App\Models\Message;
+use OpenAI\Client as OpenAI;
 
 class SearchController extends Controller
 {
-    private const SIMILARITY_THRESHOLD = 0.3;
-    private const SYSTEM_PROMPT = "You are a helpful assistant that will respond to user prompts based on the context of a provided list of messages from a Slack workspace. When referencing specific messages in your response, include their relevance rank number in brackets. Provide clear, concise answers that incorporate the context from relevant messages.";
+    private const TOP_K = 5;
+    private const SIMILARITY_THRESHOLD = 0;
+    private const SYSTEM_PROMPT = "You are a helpful assistant that responds to queries based on provided context: excerpts from messages and file attachments. Each part of the context will start with a bracketed relevance rank (e.g. `[1] {source} {excerpt}`); reference excerpts by this number at the end of sentences where they are relevant.";
 
     public function search(Request $request, OpenAI $openai, Pinecone $pinecone)
     {
-        $validated = $request->validate([
-            'query' => ['required', 'string', 'min:2', 'max:1000'],
-        ]);
+        $query = $request->validate(['query' => ['required', 'string', 'min:2', 'max:1000']])['query'];
 
-        $embedding = $this->generateEmbedding($openai, $validated['query']);
+        $embedding = $this->generateEmbedding($openai, $query);
         $matches = $this->findSimilarVectors($pinecone, $embedding);
-        $similarMessages = $this->getSimilarMessages($matches);
-        $formattedMessages = $this->formatMessagesWithScores($similarMessages);
+        $formattedChunks = $this->formatChunks($matches);
         
-        $chatResponse = $this->generateResponse($openai, $validated['query'], $similarMessages);
+        $chatResponse = $this->generateResponse($openai, $query, $matches);
         
         return response()->json([
-            'results' => [...$formattedMessages, $chatResponse]
+            'results' => [$chatResponse, ...$formattedChunks]
         ]);
     }
 
@@ -40,62 +38,43 @@ class SearchController extends Controller
             'input' => $query,
         ]);
 
+        Log::info('Embedding length', ['length' => count($response->embeddings[0]->embedding)]);
+
         return $response->embeddings[0]->embedding;
     }
 
     private function findSimilarVectors(Pinecone $pinecone, array $embedding): Collection
     {
-        $knnResponse = $pinecone->data()->vectors()->query(
-            vector: $embedding,
-            topK: 5,
-        );
+        $knnResponse = $pinecone->data()->vectors()->query(vector: $embedding, topK: self::TOP_K);
 
-        if (!$knnResponse->successful()) {
-            return collect([]);
-        }
+        Log::info('KNN response', ['response' => $knnResponse->json()]);
+
+        if (!$knnResponse->successful()) return collect([]);
 
         return collect($knnResponse->json('matches'))
             ->filter(fn($match) => $match['score'] >= self::SIMILARITY_THRESHOLD);
     }
 
-    private function getSimilarMessages(Collection $matches): Collection
+    private function formatChunks(Collection $matches): array
     {
         if ($matches->isEmpty()) {
-            return collect([[
-                'content' => 'No messages found with close enough meaning',
-                'score' => 0,
-                'name' => 'System'
-            ]]);
+            return ['No content found with close enough meaning'];
         }
 
-        return Message::whereIn('id', $matches->pluck('id'))
-            ->get()
-            ->map(function ($message) use ($matches) {
-                return [
-                    'content' => $message->content,
-                    'score' => $matches->firstWhere('id', (string) $message->id)['score'],
-                    'name' => $message->user->name
-                ];
-            })
-            ->sortByDesc('score')
-            ->values();
-    }
+        // TODO: Add user name to prefix once we have user data in metadata
+        return $matches->map(function ($match, $index) {
+            $metadata = $match['metadata'];
+            $prefix = isset($metadata['attachment_name']) 
+                ? "File '{$metadata['attachment_name']}'"
+                : "Message";
 
-    private function formatMessagesWithScores(Collection $messages): array
-    {
-        return $messages->map(function ($item, $index) {
-            return sprintf(
-                '[%d] %s: %s',
-                $index + 1,
-                $item['name'],
-                $item['content']
-            );
+            return sprintf('[%d] %s: %s', $index + 1, $prefix, $metadata['context']);
         })->all();
     }
 
-    private function generateResponse(OpenAI $openai, string $query, Collection $similarMessages): string
+    private function generateResponse(OpenAI $openai, string $query, Collection $matches): string
     {
-        $userPrompt = $this->formatCompletionPrompt($query, $similarMessages->all());
+        $userPrompt = $this->formatCompletionPrompt($query, $matches);
 
         Log::info($userPrompt);
 
@@ -112,19 +91,18 @@ class SearchController extends Controller
         return trim($response->choices[0]->message->content);
     }
 
-    private function formatCompletionPrompt(string $query, array $similarMessages): string 
+    private function formatCompletionPrompt(string $query, Collection $matches): string 
     {
-        $context = collect($similarMessages)
-            ->map(fn($item) => $item['content'])
-            ->join("\n");
+        $context = $matches->map(fn($match) => $match['metadata']['context'])->join("\n");
 
         return <<<PROMPT
-## Context
-What follows is a list of messages from the workspace that are likely relevant to your query:
+CONTEXT:
+What follows is a list of messages and file contents from the workspace that are likely relevant to your query:
 
 {$context}
 
-## Query
+
+QUERY:
 {$query}
 PROMPT;
     }

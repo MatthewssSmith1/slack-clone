@@ -1,6 +1,6 @@
 <?php
 
-use App\Http\Controllers\{ReactionController, ChannelController, MessageController, ProfileController, UserController, SearchController};
+use App\Http\Controllers\{ReactionController, ChannelController, MessageController, ProfileController, UserController, SearchController, AttachmentController};
 use Illuminate\Support\Facades\Route;
 use Illuminate\Foundation\Application;
 use Inertia\Inertia;
@@ -29,13 +29,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::resource('channels', ChannelController::class);
     Route::resource('users', UserController::class);
 
-    Route::get('/messages', [MessageController::class, 'index'])->name('messages.index');
-    Route::post('/messages', [MessageController::class, 'store'])->name('messages.store');
+    Route::get('/messages/{channel}', [MessageController::class, 'index'])->name('messages.index');
+    Route::post('/messages/{channel}', [MessageController::class, 'store'])->name('messages.store');
 
     Route::post('/reactions/{message}', [ReactionController::class, 'store'])->name('reactions.store');
     Route::delete('/reactions/{message}', [ReactionController::class, 'destroy'])->name('reactions.destroy');
+    
+    Route::get('/attachments/{message}', [AttachmentController::class, 'download'])->name('attachments.download');
 
-    Route::get('/search', [SearchController::class, 'search'])->middleware(['auth']);
+    Route::get('/search', [SearchController::class, 'search'])->name('search');
 });
 
 

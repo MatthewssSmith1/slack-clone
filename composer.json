@@ -15,9 +15,11 @@
         "laravel/reverb": "^1.0",
         "laravel/sanctum": "^4.0",
         "laravel/tinker": "^2.9",
+        "league/flysystem-aws-s3-v3": "^3.0",
         "openai-php/client": "^0.10.3",
         "probots-io/pinecone-php": "^1.1",
         "pusher/pusher-php-server": "^7.2",
+        "theodo-group/llphant": "^0.9.2",
         "tightenco/ziggy": "^2.0"
     },
     "require-dev": {
@@ -42,7 +44,10 @@
     "autoload-dev": {
         "psr-4": {
             "Tests\\": "tests/"
-        }
+        },
+        "exclude-from-classmap": [
+            "vendor/fly-apps/"
+        ]
     },
     "scripts": {
         "post-autoload-dump": [
