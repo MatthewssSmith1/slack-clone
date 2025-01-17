@@ -21,6 +21,7 @@ import {
     TooltipProvider,
     TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { Separator } from "@/components/ui/separator";
 
 interface AssistantFilterStore {
     channelId: number | null;
@@ -31,7 +32,7 @@ interface AssistantFilterStore {
     setPersona: (isPersona: boolean) => void;
 }
 
-const useAssistantFilterStore = create<AssistantFilterStore>((set, get) => ({
+export const useAssistantFilterStore = create<AssistantFilterStore>((set, get) => ({
     channelId: null,
     userId: null,
     isPersona: false,
@@ -64,6 +65,8 @@ export default function AssistantFilter() {
             <ChannelSelect />
             <UserSelect />
             <PersonaCheckbox />
+            <Separator orientation="vertical" className="h-6 opacity-30" />
+            <VoiceCheckbox />
         </div>
     );
 }
@@ -169,7 +172,6 @@ function Option({ label, value, icon }: { label: string; value: string; icon: Ch
         </SelectItem>
     );
 }
-
 function PersonaCheckbox() {
     const { isPersona, setPersona, userId } = useAssistantFilterStore();
 
@@ -177,24 +179,51 @@ function PersonaCheckbox() {
         <TooltipProvider>
             <Tooltip>
                 <TooltipTrigger asChild>
-                    <div className="flex items-center gap-2 transition-opacity duration-200">
-                        <div className={`flex items-center gap-2 ${!userId ? 'opacity-50 pointer-events-none' : ''}`}>
-                            <Checkbox
-                                id="persona"
-                                checked={isPersona}
-                                onCheckedChange={setPersona}
-                            />
-                            <label
-                                htmlFor="persona"
-                                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 select-none cursor-pointer"
-                            >
-                                Use their persona
-                            </label>
-                        </div>
+                    <div className={`flex items-center gap-1.5 transition-opacity duration-200 ${!userId ? 'opacity-50 pointer-events-none' : ''}`}>
+                        <Checkbox
+                            id="persona"
+                            checked={isPersona}
+                            onCheckedChange={setPersona}
+                        />
+                        <label
+                            htmlFor="persona"
+                            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 select-none cursor-pointer"
+                        >
+                            Persona
+                        </label>
                     </div>
                 </TooltipTrigger>
                 <TooltipContent>
                     <p>Respond as a digital twin of the selected user, rather than an objective third party</p>
+                </TooltipContent>
+            </Tooltip>
+        </TooltipProvider>
+    );
+}
+
+function VoiceCheckbox() {
+    // const { isVoice, setVoice, userId } = useAssistantFilterStore();
+
+    return (
+        <TooltipProvider>
+            <Tooltip>
+                <TooltipTrigger asChild>
+                    <div className="flex items-center gap-1.5 transition-opacity duration-200">
+                        <Checkbox
+                            id="voice"
+                            // checked={isVoice}
+                            // onCheckedChange={setVoice}
+                        />
+                        <label
+                            htmlFor="voice"
+                            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 select-none cursor-pointer"
+                        >
+                            Voice
+                        </label>
+                    </div>
+                </TooltipTrigger>
+                <TooltipContent>
+                    <p>To be implemented</p>
                 </TooltipContent>
             </Tooltip>
         </TooltipProvider>

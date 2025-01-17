@@ -12,7 +12,9 @@ interface Props {
     onOpenChange: (open: boolean) => void;
 }
 
-export default function SearchModal({ open, onOpenChange }: Props) {
+// DEPRECATED
+// export default 
+function SearchModal({ open, onOpenChange }: Props) {
     const [query, setQuery] = useState('');
     const [results, setResults] = useState<string[]>([]);
     const [isLoading, setIsLoading] = useState(false);

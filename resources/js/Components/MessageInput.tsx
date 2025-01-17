@@ -1,12 +1,12 @@
 import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import { FileUpload, FileWithPreview } from '@/components/ui/file-upload';
 import React, { useMemo, useState } from 'react';
-import { ALargeSmall, Send, Plus } from 'lucide-react';
+import { useAssistantFilterStore } from './AssistantFilter';
 import { useWorkspaceStore } from '@/stores/workspaceStore';
 import NewMessageIndicator from './NewMessageIndicator';
 import { MessagesState } from '@/stores/messageStores';
-import RichTextButtons from './RichTextButtons';
 import { ChannelType } from '@/lib/utils';
+import { Send, Plus } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
 import { useAuth } from '@/hooks/use-auth';
 import { Button } from '@/components/ui/button';
@@ -38,15 +38,20 @@ export default function MessageInput({ addMessage, parentId, isThread }: Props) 
         const content = message.trim();
         
         const formData = new FormData();
-        if (content.length > 0) formData.append('content', content);
-        if (parentId) formData.append('parentId', parentId.toString());
+        formData.append('content', content);
+        // should this be a string if its `['sometimes', 'integer', 'exists:messages,id']` on the backend:
+        if (parentId) formData.append('parentId', parentId.toString()); 
         if (attachment) formData.append('attachment', attachment);
+
+        if (currentChannel.channel_type === ChannelType.Assistant)
+            formData.append('assistantOpts', JSON.stringify(useAssistantFilterStore.getState()));
 
         setMessage('');
         setAttachment(null);
         setShowFileUpload(false);
 
         try {
+            // TODO: optimistic update
             const response = await axios.post(route('messages.store', { channel: currentChannel.id }), formData, {
                 headers: { 'Content-Type': 'multipart/form-data' }
             });

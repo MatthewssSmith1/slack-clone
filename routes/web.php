@@ -1,6 +1,6 @@
 <?php
 
-use App\Http\Controllers\{ReactionController, ChannelController, MessageController, ProfileController, UserController, SearchController, AttachmentController};
+use App\Http\Controllers\{ReactionController, ChannelController, MessageController, ProfileController, UserController, AttachmentController};
 use Illuminate\Support\Facades\Route;
 use Illuminate\Foundation\Application;
 use Inertia\Inertia;
@@ -36,8 +36,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::delete('/reactions/{message}', [ReactionController::class, 'destroy'])->name('reactions.destroy');
     
     Route::get('/attachments/{message}', [AttachmentController::class, 'download'])->name('attachments.download');
-
-    Route::get('/search', [SearchController::class, 'search'])->name('search');
 });
 
 

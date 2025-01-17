@@ -7,10 +7,13 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use LLPhant\Embeddings\{Document, DocumentSplitter\DocumentSplitter};
 use Illuminate\Queue\{InteractsWithQueue, SerializesModels};
+use App\Services\AssistantService;
+use App\Data\{AssistantOptions, PineconeVector};
 use Probots\Pinecone\Client as Pinecone;
 use Illuminate\Bus\Queueable;
 use App\Models\Message;
 use OpenAI\Client as OpenAI;
+use App\Enums\ChannelType;
 
 class MessageEmbeddingJob implements ShouldQueue
 {
@@ -20,60 +23,30 @@ class MessageEmbeddingJob implements ShouldQueue
     const MAX_CHUNKS = 150;
     const WORD_OVERLAP = 10;
 
-    public function __construct(public Message $message) {}
+    public function __construct(
+        public Message $message,
+        public ?AssistantOptions $assistantOpts = null
+    ) {}
 
-    public function handle(OpenAI $openai, Pinecone $pinecone)
+    public function handle(OpenAI $openai, Pinecone $pinecone, AssistantService $assistantService)
     {
-        $messageChunks = $this->splitMessage();
-        $fileChunks = $this->splitFile();
+        $messageChunks = $this->textToChunks($this->message->content);
+        $messageCount = count($messageChunks);
 
-        $vectors = [];
-        foreach ($messageChunks as $index => $chunk) {
-            if ($index >= self::MAX_CHUNKS) break;
-            $vectors[] = $this->chunkToPineconeVec($openai, $chunk, count($vectors), false);
-        }
-
-        foreach ($fileChunks as $index => $chunk) {
-            if (count($vectors) >= self::MAX_CHUNKS) break;
-            $vectors[] = $this->chunkToPineconeVec($openai, $chunk, count($vectors), true);
-        }
-
+        $vectors = collect([...$messageChunks, ...$this->fileToChunks()])
+            ->take(self::MAX_CHUNKS)
+            ->values()
+            ->map(fn($chunk, $i) => $this->chunkToPineconeVec($openai, $chunk, $i, $i >= $messageCount))
+            ->all();
         if (empty($vectors)) return;
         
-        // Log::info('Storing message embeddings', [
-        //     'count' => count($vectors),
-        //     'message_id' => $this->message->id,
-        // ]);
+        $pinecone->data()->vectors()->upsert(vectors: $vectors);
 
-        $response = $pinecone->data()->vectors()->upsert(vectors: $vectors);
-
-        // if (!$response->successful()) {
-        //     Log::error('Failed to store message embeddings', [
-        //         'message_id' => $this->message->id,
-        //         'response' => $response->json()
-        //     ]);
-        // } else {
-        //     Log::info('Message embeddings stored successfully', [
-        //         'message_id' => $this->message->id,
-        //         'response' => $response->json()
-        //     ]);
-        // }
+        if ($this->assistantOpts) 
+            $assistantService->generateResponse($vectors, $this->message, $this->assistantOpts);
     }
 
-    private function splitMessage(): array
-    {
-        if (empty($this->message->content)) return [];
-
-        $doc = new Document();
-        $doc->content = $this->message->content;
-
-        return array_map(
-            fn($doc) => $doc->content,
-            DocumentSplitter::splitDocument($doc, self::CHUNK_SIZE)
-        );
-    }
-
-    private function splitFile(): array
+    private function fileToChunks(): array
     {
         if (!$this->message->attachment_path) return [];
 
@@ -82,16 +55,23 @@ class MessageEmbeddingJob implements ShouldQueue
 
         $file = Storage::get($this->message->attachment_path);
 
+        return $this->textToChunks($file);
+    }
+
+    private function textToChunks(string $content): array
+    {
+        if (empty($content)) return [];
+
         $doc = new Document();
-        $doc->content = $file;
+        $doc->content = $content;
 
         return array_map(
             fn($doc) => $doc->content,
-            DocumentSplitter::splitDocument($doc, self::CHUNK_SIZE)
+            DocumentSplitter::splitDocument($doc, self::CHUNK_SIZE, ' ', self::WORD_OVERLAP)
         );
     }
 
-    private function chunkToPineconeVec(OpenAI $openai, string $chunk, int $index, bool $isFileChunk): array 
+    private function chunkToPineconeVec(OpenAI $openai, string $chunk, int $index, bool $isFileChunk): PineconeVector 
     {
         $header = $isFileChunk 
             ? "file '{$this->message->attachment_name}' uploaded by {$this->message->user->name}"
@@ -102,19 +82,23 @@ class MessageEmbeddingJob implements ShouldQueue
             'model' => config('services.openai.embedding_model'),
         ]);
 
+        return new PineconeVector(
+            id: "{$this->message->id}-{$index}",
+            values: $response->embeddings[0]->embedding,
+            metadata: $this->getMetadata($chunk),
+        );
+    }
+
+    private function getMetadata(string $chunk): array
+    {
         $metadata = [
             'channel_id' => $this->message->channel_id,
             'message_id' => $this->message->id,
             'context' => $chunk,
         ];
+
         if ($this->message->user_id) $metadata['user_id'] = $this->message->user_id;
 
-        if ($isFileChunk) $metadata['attachment_name'] = $this->message->attachment_name;
-
-        return [
-            'id' => "{$this->message->id}-{$index}",
-            'values' => $response->embeddings[0]->embedding,
-            'metadata' => $metadata,
-        ];
+        return $metadata;   
     }
 } 

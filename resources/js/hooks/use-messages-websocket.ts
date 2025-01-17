@@ -12,29 +12,23 @@ interface ReactionPostedEvent {
 
 export function useMessagesWebsocket() {
     const { currentChannel } = useWorkspaceStore();
-    const { user } = useAuth();
-    const store = useChannelStore();
+    const { user: authUser } = useAuth();
+    const channelStore = useChannelStore();
 
     useEffect(() => {
-        if (!currentChannel || !user) return;
+        if (!currentChannel || !authUser) return;
         
         const channelId = `channel.${currentChannel.id}`;
         window.Echo?.leave(channelId);
 
-        console.log(channelId);
-
         window.Echo.private(channelId)
-            .listen('MessagePosted', ({ message }: { message: Message }) => {
-                if (message.user.id !== user.id) 
-                    store.addMessage(message, false);
-            })
-            .listen('ReactionPosted', ({ message_id, user_id, emoji_code }: ReactionPostedEvent) => {
-                if (user_id !== user.id) 
-                    store.updateReaction(message_id, user_id, emoji_code);
-            });
+            .listen('MessagePosted', ({ message }: { message: Message }) => 
+                (message.user?.id !== authUser.id && channelStore.addMessage(message, false)))
+            .listen('ReactionPosted', (e: ReactionPostedEvent) => 
+                (e.user_id !== authUser.id && channelStore.updateReaction(e.message_id, e.user_id, e.emoji_code)));
 
         return () => window.Echo?.leave(channelId);
-    }, [currentChannel?.id, user.id]);
+    }, [currentChannel?.id, authUser.id]);
 
-    return store;
+    return channelStore;
 } 

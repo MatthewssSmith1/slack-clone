@@ -37,7 +37,7 @@ function Header({ message }: { message: Message }) {
 
     return (
         <div className="flex items-center gap-2 mb-0.5">
-            <span className="font-medium whitespace-nowrap overflow-hidden text-ellipsis">{message.user.name}</span>
+            <span className="font-medium whitespace-nowrap overflow-hidden text-ellipsis">{message.user?.name || 'Assistant'}</span>
             <span className="text-xs mt-[1px] text-muted-foreground select-none whitespace-nowrap">
                 {new Date(message.created_at).toLocaleTimeString([], TIME_FORMAT)}
             </span>

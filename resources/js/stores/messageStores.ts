@@ -71,7 +71,7 @@ const createMessagesStore = (isThread: boolean) => create<MessagesState>((set, g
             if (!state.messages) return state;
 
             const [prevMessage] = state.messages;
-            message.is_continuation = prevMessage ? message.user.id === prevMessage.user.id : false;
+            message.is_continuation = prevMessage ? message.user?.id === prevMessage.user?.id : false;
 
             return {
                 messages: [message, ...state.messages],

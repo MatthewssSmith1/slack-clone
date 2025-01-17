@@ -22,7 +22,7 @@ function ReactionButton({ message }: { message: Message }) {
     const { open } = useEmojiPickerStore();
     const { user } = useAuth();
 
-    if (user?.id === message.user.id) return null;
+    if (user?.id === message.user?.id) return null;
 
     const openEmojis = (e: React.MouseEvent<HTMLButtonElement>) => {
         const rect = e.currentTarget.getBoundingClientRect();

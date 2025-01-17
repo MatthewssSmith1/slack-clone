@@ -2,22 +2,24 @@
 
 namespace App\Providers;
 
+use OpenAI;
+use Probots\Pinecone;
 use Illuminate\Support\Facades\{Vite, URL};
 use Illuminate\Support\ServiceProvider;
+use App\Services\AssistantService;
 
 class AppServiceProvider extends ServiceProvider
 {
-    /**
-     * Register any application services.
-     */
     public function register(): void
     {
-        //
+        $this->app->singleton(AssistantService::class, function ($app) {
+            return new AssistantService(
+                $app->make(OpenAI\Client::class),
+                $app->make(Pinecone\Client::class)
+            );
+        });
     }
 
-    /**
-     * Bootstrap any application services.
-     */
     public function boot(): void
     {
         Vite::prefetch(concurrency: 3);

@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\Channel;
 use App\Models\Message;
 use App\Jobs\MessageEmbeddingJob;
+use App\Data\AssistantOptions;
+use App\Events\MessagePosted;
 use Illuminate\Http\{JsonResponse, Request};
 use Illuminate\Support\Facades\{Auth, DB, Log, Storage};
 use Illuminate\Validation\Rules\File;
@@ -18,12 +20,12 @@ class MessageController extends Controller
 
     public function index(Request $request, Channel $channel): JsonResponse
     {
+        $this->authorize('view', $channel);
+
         $validated = $request->validate([
             'parentId' => ['sometimes', 'integer', 'exists:messages,id'],
             'cursor' => ['sometimes', 'integer', 'min:0']
         ]);
-
-        $this->authorize('view', $channel);
 
         // TODO: select only needed columns (get data from userStore via user_id instead of including related user)
         $query = $channel->messages()
@@ -80,30 +82,40 @@ class MessageController extends Controller
         $this->authorize('view', $channel);
 
         $validated = $request->validate([
-            'content' => ['sometimes', 'string', 'max:2000'],
+            'content' => ['nullable', 'string', 'max:2000'],
+            'attachment' => ['sometimes', File::default()->max('10mb')],
             'parentId' => ['sometimes', 'integer', 'exists:messages,id'],
-            'attachment' => ['sometimes', File::default()->max('10mb') ]
+            ...AssistantOptions::validationRules('assistantOpts'),
         ]);
 
-        $fields = [
-            'user_id' => Auth::id(),
-            'content' => $validated['content'] ?? '',
-            'parent_id' => $validated['parentId'] ?? null,
-        ];
+        $message = $channel->messages()->create($this->getMessageFields($validated));
 
-        if (isset($validated['attachment']) && $validated['attachment']) {
-            $file = $validated['attachment'];
+        // send to other users in channel
+        broadcast(new MessagePosted($message));
+        
+        // assistant responds, eventually broadcasted to the authed user's assistant channel
+        MessageEmbeddingJob::dispatch(
+            $message, 
+            isset($validated['assistantOpts']) ? AssistantOptions::fromJson($validated['assistantOpts']) : null
+        );
 
+        return $message->load('user:id,name,profile_picture');
+    }
+
+    private function getMessageFields(array $data): array
+    {
+        $validated['content'] ??= '';
+        $fields = ['user_id' => Auth::id(), 'content' => $data['content']];
+
+        if (isset($data['parentId'])) $fields['parent_id'] = $data['parentId'];
+
+        if (isset($data['attachment'])) {
+            $file = $data['attachment'];
             $fields['attachment_name'] = $file->getClientOriginalName();
             $fields['attachment_path'] = Storage::putFile('attachments', $file);
         }
 
-        $message = $channel->messages()->create($fields);
-
-        broadcast(new \App\Events\MessagePosted($message));
-        
-        MessageEmbeddingJob::dispatch($message);
-
-        return $message->load('user:id,name,profile_picture');
+        return $fields;
     }
 } 
+
