@@ -14,7 +14,7 @@ export interface Channel {
     name: string;
     description: string | null;
     channel_type: ChannelType;
-    users: User[];
+    user_ids: number[];
 } 
 
 export interface Message {

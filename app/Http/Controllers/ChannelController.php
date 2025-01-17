@@ -3,10 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Models\Channel;
-use App\Enums\ChannelType;
+use App\Enums\{ChannelType, Role};
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\{Auth, Log};
+use Inertia\Response;
 
 class ChannelController extends Controller
 {
@@ -17,10 +18,10 @@ class ChannelController extends Controller
             ->with(['messages.user'])
             ->select('channels.*')
             ->with(['users' => function($query) use ($user) {
-                $query->select('users.id', 'users.name', 'users.status')
+                $query->select('users.id')
                     ->where('users.id', '!=', $user->id);
             }])
-            ->orderBy('name')
+            ->orderBy('created_at', 'desc')
             ->get()
             ->map(function ($channel) use ($user) {
                 if ($channel->channel_type === ChannelType::Direct) {
@@ -29,6 +30,9 @@ class ChannelController extends Controller
                         ->reject(fn($name) => $name === $user->name)
                         ->join(', ');
                 }
+                // Transform users to user_ids
+                $channel->user_ids = $channel->users->pluck('id')->all();
+                unset($channel->users);
                 return $channel;
             });
 
@@ -40,29 +44,34 @@ class ChannelController extends Controller
     public function store(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'channel_type' => ['required', 'string', 'in:public,direct'],
-            'description' => ['nullable', 'string', 'max:1000'],
-            'user_ids' => ['required_if:channel_type,direct', 'array'],
-            'user_ids.*' => ['exists:users,id']
+            'name' => ['required', 'string', 'max:30'],
+            'selectedUsers' => ['required', 'array'],
+            'selectedUsers.*' => ['exists:users,id'],
         ]);
 
         $channel = Channel::create([
             'name' => $validated['name'],
-            'channel_type' => $validated['channel_type'],
-            'description' => $validated['description'] ?? null,
-            'created_by' => Auth::id()
+            'channel_type' => ChannelType::Public,
+            'description' => null,
         ]);
 
-        if (isset($validated['user_ids'])) {
-            $channel->users()->attach($validated['user_ids']);
-        }
+        $channel->users()->attach(Auth::id(), ['role' => Role::Owner]);
 
-        // Always add the creator to the channel
-        $channel->users()->syncWithoutDetaching([Auth::id()]);
+        $channel->users()->attach(
+            collect($validated['selectedUsers'])
+                ->reject(fn($id) => $id === Auth::id())
+                ->mapWithKeys(fn($id) => [$id => ['role' => Role::Member]])
+                ->all()
+        );
+
+        $channel->user_ids = collect($validated['selectedUsers'])
+            ->push(Auth::id())
+            ->unique()
+            ->values()
+            ->all();
 
         return response()->json([
-            'channel' => $channel->loadCount('users')->load(['messages.user', 'users'])
+            'channel' => $channel
         ], 201);
     }
 
@@ -72,45 +81,47 @@ class ChannelController extends Controller
             abort(403, 'You do not have access to this channel.');
         }
 
-        return response()->json([
-            'channel' => $channel->loadCount('users')->load(['messages.user', 'users'])
-        ]);
-    }
-
-    public function update(Request $request, Channel $channel): JsonResponse
-    {
-        // $this->authorize('update', $channel);
-
-        $validated = $request->validate([
-            'name' => ['sometimes', 'string', 'max:255'],
-            'description' => ['nullable', 'string', 'max:1000'],
-        ]);
-
-        $channel->update($validated);
+        $channel->loadCount('users')->load(['messages.user']);
+        $channel->user_ids = $channel->users->pluck('id')->all();
+        unset($channel->users);
 
         return response()->json([
-            'channel' => $channel->fresh(['messages.user', 'users'])
+            'channel' => $channel
         ]);
     }
 
-    public function destroy(Channel $channel): JsonResponse
-    {
-        // $this->authorize('delete', $channel);
+    // public function update(Request $request, Channel $channel): JsonResponse
+    // {
 
-        $channel->delete();
+    //     $validated = $request->validate([
+    //         'name' => ['sometimes', 'string', 'max:255'],
+    //         'description' => ['nullable', 'string', 'max:1000'],
+    //     ]);
 
-        return response()->json([], 204);
-    }
+    //     $channel->update($validated);
 
-    public function redirectToFirstChannel()
-    {
-        $user = Auth::user();
-        $firstChannel = $user->channels()->first();
+    //     return response()->json([
+    //         'channel' => $channel->fresh(['messages.user', 'users'])
+    //     ]);
+    // }
 
-        if ($firstChannel) {
-            return redirect()->route('channels.show', ['channel' => $firstChannel->id]);
-        }
+    // public function destroy(Channel $channel): JsonResponse
+    // {
 
-        return redirect()->route('dashboard'); // Fallback if no channel is found
-    }
+    //     $channel->delete();
+
+    //     return response()->json([], 204);
+    // }
+
+    // public function redirectToFirstChannel()
+    // {
+    //     $user = Auth::user();
+    //     $firstChannel = $user->channels()->first();
+
+    //     if ($firstChannel) {
+    //         return redirect()->route('channels.show', ['channel' => $firstChannel->id]);
+    //     }
+
+    //     return redirect()->route('dashboard'); // Fallback if no channel is found
+    // }
 } 

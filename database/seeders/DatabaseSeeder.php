@@ -35,9 +35,8 @@ class DatabaseSeeder extends Seeder
         foreach ($userPairs as $pair) {
             $dmChannel = Channel::factory()
                 ->direct()
-                ->create([
-                    'name' => $pair->map->name->join(', '),
-                ]);
+                ->name($pair->map->name->join(', '))
+                ->create();
             
             $dmChannel->users()->attach($pair->pluck('id'));
             
@@ -49,6 +48,11 @@ class DatabaseSeeder extends Seeder
                 ])
                 ->create();
         }
+
+        $users->each(function ($user) {
+            $assistantChannel = Channel::factory()->assistant()->name('Assistant')->create();
+            $assistantChannel->users()->attach($user->id);
+        });
     }
 
     private function generateRandomUserPairs(Collection $users, int $count): array

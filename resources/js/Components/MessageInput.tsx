@@ -20,7 +20,7 @@ interface Props {
 
 export default function MessageInput({ addMessage, parentId, isThread }: Props) {
     const { currentChannel } = useWorkspaceStore();
-    const [showRichText, setShowRichText] = useState(false);
+    // const [showRichText, setShowRichText] = useState(false);
     const [showFileUpload, setShowFileUpload] = useState(false);
 
     const [message, setMessage] = useState<string>('');
@@ -71,7 +71,7 @@ export default function MessageInput({ addMessage, parentId, isThread }: Props) 
         <footer className="bg-background m-4 mt-0 rounded-md relative [&_button]:rounded-full">
             <NewMessageIndicator />
             <form onSubmit={onSubmit} className="border border-border rounded-md bg-card">
-                {showRichText && <RichTextButtons />}
+                {/* {showRichText && <RichTextButtons />} */}
                 <InputArea
                     message={message}
                     setMessage={setMessage}
@@ -80,9 +80,9 @@ export default function MessageInput({ addMessage, parentId, isThread }: Props) 
                 />
                 {showFileUpload && <FileUpload onFilesUploaded={handleFilesUploaded} />}
                 <BottomButtonRow
-                    message={message}
-                    showRichText={showRichText}
-                    setShowRichText={setShowRichText}
+                    // message={message}
+                    // showRichText={showRichText}
+                    // setShowRichText={setShowRichText}
                     showFileUpload={showFileUpload}
                     setShowFileUpload={setShowFileUpload}
                     canSendMessage={canSendMessage}
@@ -93,15 +93,14 @@ export default function MessageInput({ addMessage, parentId, isThread }: Props) 
 }
 
 interface BottomButtonRowProps {
-    message: string;
-    showRichText: boolean;
-    setShowRichText: (show: boolean) => void;
+    // showRichText: boolean;
+    // setShowRichText: (show: boolean) => void;
     showFileUpload: boolean;
     setShowFileUpload: (show: boolean) => void;
     canSendMessage: boolean;
 }
 
-function BottomButtonRow({ message, showRichText, setShowRichText, showFileUpload, setShowFileUpload, canSendMessage }: BottomButtonRowProps) {
+function BottomButtonRow({ showFileUpload, setShowFileUpload, canSendMessage }: BottomButtonRowProps) {
     return (
         <div className="flex p-2 border-border/50 border-t">
             <TooltipProvider>
@@ -123,7 +122,7 @@ function BottomButtonRow({ message, showRichText, setShowRichText, showFileUploa
                     </TooltipContent>
                 </Tooltip>
             </TooltipProvider>
-            <TooltipProvider>
+            {/* <TooltipProvider>
                 <Tooltip>
                     <TooltipTrigger asChild>
                         <Button type="button" size="sm" variant="ghost" className="h-8 w-8 p-0" onClick={() => setShowRichText(!showRichText)}>
@@ -135,7 +134,7 @@ function BottomButtonRow({ message, showRichText, setShowRichText, showFileUploa
                         <p>{showRichText ? 'Hide' : 'Show'} Formatting</p>
                     </TooltipContent>
                 </Tooltip>
-            </TooltipProvider>
+            </TooltipProvider> */}
             <div className="grow" />
             <TooltipProvider>
                 <Tooltip>

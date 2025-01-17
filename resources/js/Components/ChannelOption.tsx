@@ -3,9 +3,10 @@ import { useWorkspaceStore } from '@/stores/workspaceStore';
 import type { Channel } from '@/types/slack';
 import StatusIndicator from './StatusIndicator';
 import { ChannelType } from '@/lib/utils';
-import { User, Hash } from 'lucide-react';
+import { User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import ChannelIcon from './ChannelIcon';
 
 export function SkeletonOption() {
     return <div className="animate-pulse h-9 mt-1 w-full bg-muted rounded-md select-none"></div>;
@@ -14,29 +15,31 @@ export function SkeletonOption() {
 export default function ChannelOption({ channel, isCurrent }: { channel: Channel; isCurrent: boolean }) {
     const { setCurrentChannel } = useWorkspaceStore();
 
-    // For DM channels, find the other user's ID
     const otherUserId = channel.channel_type === ChannelType.Direct
-        ? channel.users[0]?.id
-        : undefined;
+        ? channel.user_ids[0] : undefined;
     
     return (
-        <Button
-            variant="ghost"
-            onClick={() => setCurrentChannel(channel.id)}
+        <div
             className={cn(
-                "w-full justify-start gap-2 px-2 py-2 h-auto hover:bg-muted/50",
+                "group flex items-center w-full gap-2 rounded-md hover:bg-muted/80",
                 isCurrent && "bg-muted"
             )}
         >
-            {channel.channel_type === ChannelType.Direct ? 
-                <DirectPrefix userId={otherUserId} /> :
-                <PublicPrefix />}
-            {channel.name}
-        </Button>
+            <Button
+                variant="ghost"
+                onClick={() => setCurrentChannel(channel.id)}
+                className="flex-1 justify-start gap-2 px-2 py-1.5 h-auto hover:bg-transparent"
+            >
+                { channel.channel_type === ChannelType.Direct 
+                    ? <UserProfile userId={otherUserId} /> 
+                    : <ChannelIcon channelType={channel.channel_type} /> }
+                { channel.name }
+            </Button>
+        </div>
     );
 } 
 
-function DirectPrefix({ userId }: { userId?: number }) {
+function UserProfile({ userId }: { userId?: number }) {
     return (
         <div className="relative overflow-visible">
             <Avatar className="size-5">
@@ -47,8 +50,4 @@ function DirectPrefix({ userId }: { userId?: number }) {
             <StatusIndicator userId={userId} />
         </div>
     );
-}
-
-function PublicPrefix() {
-    return <Hash className="size-4 shrink-0 text-muted-foreground" />;
 }

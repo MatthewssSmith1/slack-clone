@@ -1,4 +1,4 @@
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { ChevronDown, Loader2 } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Textarea } from '@/components/ui/textarea';
@@ -19,8 +19,9 @@ export default function SearchModal({ open, onOpenChange }: Props) {
 
     const handleSubmit = async () => {
         try {
-            setIsLoading(true);
             setQuery('');
+            setResults([]);
+            setIsLoading(true);
             const response = await axios.get(route('search'), {
                 params: { query }
             });
@@ -39,9 +40,10 @@ export default function SearchModal({ open, onOpenChange }: Props) {
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="sm:max-w-2xl">
+            <DialogContent className="w-[80vw] max-w-[700px]">
                 <DialogHeader>
-                    <DialogTitle>Search Workspace</DialogTitle>
+                    <DialogTitle>Workspace RAG</DialogTitle>
+                    <DialogDescription>Ask questions about messages and files in this workspace.</DialogDescription>
                 </DialogHeader>
                 <SearchResults results={results} isLoading={isLoading} />
                 <Textarea

@@ -13,22 +13,25 @@ use OpenAI\Client as OpenAI;
 class SearchController extends Controller
 {
     private const TOP_K = 5;
-    private const SIMILARITY_THRESHOLD = 0;
+    private const SIMILARITY_THRESHOLD = 0.2;
     private const SYSTEM_PROMPT = "You are a helpful assistant that responds to queries based on provided context: excerpts from messages and file attachments. Each part of the context will start with a bracketed relevance rank (e.g. `[1] {source} {excerpt}`); reference excerpts by this number at the end of sentences where they are relevant.";
 
     public function search(Request $request, OpenAI $openai, Pinecone $pinecone)
     {
-        $query = $request->validate(['query' => ['required', 'string', 'min:2', 'max:1000']])['query'];
+        try {
+            $query = $request->validate(['query' => ['required', 'string', 'min:2', 'max:1000']])['query'];
 
-        $embedding = $this->generateEmbedding($openai, $query);
-        $matches = $this->findSimilarVectors($pinecone, $embedding);
-        $formattedChunks = $this->formatChunks($matches);
-        
-        $chatResponse = $this->generateResponse($openai, $query, $matches);
-        
-        return response()->json([
-            'results' => [$chatResponse, ...$formattedChunks]
-        ]);
+            $embedding = $this->generateEmbedding($openai, $query);
+            $matches = $this->findSimilarVectors($pinecone, $embedding);
+            $formattedChunks = $this->formatChunks($matches);
+            $chatResponse = $this->generateResponse($openai, $query, $matches);
+            
+            return response()->json([
+                'results' => [$chatResponse, ...$formattedChunks]
+            ]);
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'An unexpected error occurred while searching'], 500);
+        }
     }
 
     private function generateEmbedding(OpenAI $openai, string $query): array
@@ -38,16 +41,12 @@ class SearchController extends Controller
             'input' => $query,
         ]);
 
-        Log::info('Embedding length', ['length' => count($response->embeddings[0]->embedding)]);
-
         return $response->embeddings[0]->embedding;
     }
 
     private function findSimilarVectors(Pinecone $pinecone, array $embedding): Collection
     {
         $knnResponse = $pinecone->data()->vectors()->query(vector: $embedding, topK: self::TOP_K);
-
-        Log::info('KNN response', ['response' => $knnResponse->json()]);
 
         if (!$knnResponse->successful()) return collect([]);
 
@@ -61,7 +60,7 @@ class SearchController extends Controller
             return ['No content found with close enough meaning'];
         }
 
-        // TODO: Add user name to prefix once we have user data in metadata
+        // TODO: Add user name to prefix (fetch users with user_id in metadata)
         return $matches->map(function ($match, $index) {
             $metadata = $match['metadata'];
             $prefix = isset($metadata['attachment_name']) 

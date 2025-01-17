@@ -44,11 +44,11 @@ const createMessagesStore = (isThread: boolean) => create<MessagesState>((set, g
         });
 
         try {
-            const params = { parentId, ...(cursor && { cursor }) };
-            const response = await axios.get(route('messages.index', { channel: channelId, ...params }));
+            const params = { channel: channelId, parentId, ...(cursor && { cursor }) };
+            const response = await axios.get(route('messages.index', params));
             const { nextCursor, messages } = response.data;
 
-            console.log(messages);
+            // console.log(messages);
 
             set((state) => {
                 const newMessages = cursor && state.messages ? [...state.messages, ...messages] : messages;

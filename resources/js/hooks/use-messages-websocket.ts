@@ -21,6 +21,8 @@ export function useMessagesWebsocket() {
         const channelId = `channel.${currentChannel.id}`;
         window.Echo?.leave(channelId);
 
+        console.log(channelId);
+
         window.Echo.private(channelId)
             .listen('MessagePosted', ({ message }: { message: Message }) => {
                 if (message.user.id !== user.id) 

@@ -25,7 +25,7 @@ class MessageController extends Controller
 
         $this->authorize('view', $channel);
 
-        // TODO: select only needed columns (get data from userStore with user_id instead of including related user)
+        // TODO: select only needed columns (get data from userStore via user_id instead of including related user)
         $query = $channel->messages()
             ->select('messages.*')
             ->with('user:id,name,profile_picture')
@@ -49,7 +49,10 @@ class MessageController extends Controller
 
         $prevMsg = null;
         foreach ($messages as $msg) {
-            $msg['is_continuation'] = $prevMsg && $msg->user_id === $prevMsg->user_id;
+            $msg['is_continuation'] = $prevMsg && 
+                $msg->user_id && 
+                $prevMsg->user_id && 
+                $msg->user_id === $prevMsg->user_id;
             $prevMsg = $msg;
 
             $msg->setRelation('reactions', 

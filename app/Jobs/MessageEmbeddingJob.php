@@ -40,24 +40,24 @@ class MessageEmbeddingJob implements ShouldQueue
 
         if (empty($vectors)) return;
         
-        Log::info('Storing message embeddings', [
-            'count' => count($vectors),
-            'message_id' => $this->message->id,
-        ]);
+        // Log::info('Storing message embeddings', [
+        //     'count' => count($vectors),
+        //     'message_id' => $this->message->id,
+        // ]);
 
         $response = $pinecone->data()->vectors()->upsert(vectors: $vectors);
 
-        if (!$response->successful()) {
-            Log::error('Failed to store message embeddings', [
-                'message_id' => $this->message->id,
-                'response' => $response->json()
-            ]);
-        } else {
-            Log::info('Message embeddings stored successfully', [
-                'message_id' => $this->message->id,
-                'response' => $response->json()
-            ]);
-        }
+        // if (!$response->successful()) {
+        //     Log::error('Failed to store message embeddings', [
+        //         'message_id' => $this->message->id,
+        //         'response' => $response->json()
+        //     ]);
+        // } else {
+        //     Log::info('Message embeddings stored successfully', [
+        //         'message_id' => $this->message->id,
+        //         'response' => $response->json()
+        //     ]);
+        // }
     }
 
     private function splitMessage(): array
@@ -104,10 +104,10 @@ class MessageEmbeddingJob implements ShouldQueue
 
         $metadata = [
             'channel_id' => $this->message->channel_id,
-            'user_id' => $this->message->user_id,
             'message_id' => $this->message->id,
             'context' => $chunk,
         ];
+        if ($this->message->user_id) $metadata['user_id'] = $this->message->user_id;
 
         if ($isFileChunk) $metadata['attachment_name'] = $this->message->attachment_name;
 

@@ -15,7 +15,7 @@ interface ChatViewProps {
 
 export default function ChatView({ useStore, className }: ChatViewProps) {
     const { isThread, messages, instantScroll, setInstantScroll, setScrollContainer, addMessage } = useStore();
-    const { close } = useEmojiPickerStore();
+    const { close: closeEmojis } = useEmojiPickerStore();
 
     const scrollContainer = useRef<HTMLDivElement>(null);    
 
@@ -35,8 +35,8 @@ export default function ChatView({ useStore, className }: ChatViewProps) {
     const parentId = isThread ? messages?.at(-1)?.id : undefined;
 
     return (
-        <article className={cn("row-start-2 grid grid-rows-[1fr_auto] overflow-hidden bg-muted", className)} onMouseDown={close}>
-            <main ref={scrollContainer} onScroll={close} className="overflow-y-auto bg-panel py-4 relative flex flex-col">
+        <article className={cn("row-start-2 grid grid-rows-[1fr_auto] overflow-hidden bg-muted", className)} onMouseDown={closeEmojis}>
+            <main ref={scrollContainer} onScroll={closeEmojis} className="overflow-y-auto bg-panel py-4 relative flex flex-col bg-muted">
                 <ScrollRegion useStore={useStore} />
             </main>
             <MessageInput addMessage={addMessage} parentId={parentId} isThread={isThread} />

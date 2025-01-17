@@ -21,6 +21,13 @@ class ChannelFactory extends Factory
         ];
     }
 
+    public function name(string $name): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'name' => $name,
+        ]);
+    }
+
     public function public(): static
     {
         return $this->state(fn (array $attributes) => [
@@ -39,6 +46,13 @@ class ChannelFactory extends Factory
     {
         return $this->state(fn (array $attributes) => [
             'channel_type' => ChannelType::Direct,
+        ]);
+    }
+
+    public function assistant(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'channel_type' => ChannelType::Assistant,
         ]);
     }
 } 

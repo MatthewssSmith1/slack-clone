@@ -15,6 +15,8 @@ export const useUserStore = create<UserState>((set) => ({
     fetchUsers: async () => {
         const response = await axios.get<User[]>(route('users.index'));
 
+        console.log(response.data);
+
         if (response.status === 200) set({ users: response.data });
     },
 

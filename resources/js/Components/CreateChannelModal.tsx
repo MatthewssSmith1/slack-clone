@@ -1,13 +1,15 @@
-import { Earth, CircleSlash } from "lucide-react";
+import { Earth, CircleSlash, User2 } from "lucide-react";
+import { useWorkspaceStore } from "@/stores/workspaceStore";
 import { useUserStore } from "@/stores/userStore";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Checkbox } from "@/components/ui/checkbox";
-import { useForm } from "react-hook-form";
+import { useForm, Control } from "react-hook-form";
+import SelectPill from "@/Components/SelectPill";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import UserPill from "@/Components/UserPill";
-import * as z from "zod";
+import { Channel, User } from "@/types/slack";
 import { useEffect } from "react";
+import axios from "axios";
+import * as z from "zod";
 import {
     Form,
     FormControl,
@@ -23,14 +25,13 @@ import {
     DialogHeader,
     DialogTitle,
     DialogFooter,
+    DialogDescription,
 } from "@/components/ui/dialog";
 
 const formSchema = z.object({
     name: z.string()
         .min(1, "Channel name is required")
-        .max(80, "Channel name cannot exceed 80 characters")
-        .regex(/^[a-z0-9-]+$/, "Only lowercase letters, numbers, and hyphens are allowed"),
-    isPublic: z.boolean().default(true),
+        .max(30, "Channel name cannot exceed 30 characters"),
     selectedUsers: z.array(z.number()).default([]),
 });
 
@@ -42,137 +43,124 @@ interface Props {
 }
 
 export default function CreateChannelModal({ open, onOpenChange }: Props) {
-    const users = useUserStore(state => state.users);
     const form = useForm<FormValues>({
         resolver: zodResolver(formSchema),
         defaultValues: {
             name: "",
-            isPublic: true,
             selectedUsers: [],
         },
     });
 
+    const { users } = useUserStore();
     useEffect(() => {
         if (users.length > 0) {
+            const filteredUserIds = users
+                .filter(user => !user.is_current)
+                .map(user => user.id);
+                
             form.reset({
                 ...form.getValues(),
-                selectedUsers: users.map(user => user.id),
+                selectedUsers: filteredUserIds,
             });
         }
     }, [users]);
 
-    function onSubmit(values: FormValues) {
-        console.log(values);
+    const canSubmit = Boolean(form.watch("name")) && form.watch("selectedUsers").length > 0;
+
+    async function onSubmit(values: FormValues) {
+        try {
+            const response = await axios.post<{ channel: Channel }>(route('channels.store'), values);
+            useWorkspaceStore.getState().appendChannel(response.data.channel);
+            form.reset();
+            onOpenChange(false);
+        } catch (error) {
+            console.error('Failed to create channel:', error);
+        }
     }
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
-            <DialogContent className="sm:max-w-[550px]">
+            <DialogContent className="w-[80vw] max-w-[550px]">
                 <DialogHeader className="text-center w-full mb-3">
                     <DialogTitle className="select-nonecenter">New Channel</DialogTitle>
                 </DialogHeader>
-
+                <DialogDescription>
+                    Organize conversations with a dedicated channel for your group.
+                </DialogDescription>
                 <Form {...form}>
                     <form onSubmit={form.handleSubmit(onSubmit)} className="grid gap-8">
-                        <FormField
-                            control={form.control}
-                            name="name"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>Name</FormLabel>
-                                    <FormControl>
-                                        <Input placeholder="project-name" {...field} />
-                                    </FormControl>
-                                    <FormDescription>
-                                        Use lowercase letters, numbers, and hyphens only.
-                                    </FormDescription>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-
-                        <div className="space-y-4">
-                            <div className="flex flex-col gap-1.5">
-                                <FormLabel className="font-semibold">Add members</FormLabel>
-                            </div>
-                            <div className="grid grid-cols-3 gap-2">
-                                {users.map((user) => (
-                                    <UserPill 
-                                        key={user.id} 
-                                        user={user} 
-                                        control={form.control} 
-                                    />
-                                ))}
-                                <FormField
-                                    control={form.control}
-                                    name="selectedUsers"
-                                    render={({ field }) => {
-                                        const allSelected = users.length === (field.value?.length || 0);
-                                        
-                                        return (
-                                            <FormItem>
-                                                <FormControl>
-                                                    <button
-                                                        type="button"
-                                                        role="checkbox"
-                                                        aria-checked={allSelected}
-                                                        aria-label={allSelected ? "Deselect all users" : "Select all users"}
-                                                        className={`w-full h-9 px-3 rounded-full text-sm font-medium transition-all duration-200 ease-in-out relative overflow-hidden flex items-center justify-start gap-2
-                                                            ${allSelected 
-                                                                ? 'bg-primary text-primary-foreground' 
-                                                                : 'bg-muted hover:bg-muted/80 text-muted-foreground'
-                                                            }`}
-                                                        onClick={() => {
-                                                            field.onChange(allSelected ? [] : users.map(u => u.id));
-                                                        }}
-                                                    >
-                                                        {allSelected ? (
-                                                            <CircleSlash className="h-4 w-4 shrink-0 relative z-10 text-primary-foreground" />
-                                                        ) : (
-                                                            <Earth className="h-4 w-4 shrink-0 relative z-10 text-muted-foreground" />
-                                                        )}
-                                                        <span className="relative z-10 truncate min-w-0">
-                                                            {allSelected ? "Deselect All" : "Select All"}
-                                                        </span>
-                                                        <div 
-                                                            aria-hidden="true"
-                                                            className={`absolute inset-0 transition-transform duration-200 ease-in-out bg-primary
-                                                                ${allSelected ? 'translate-x-0' : 'translate-x-[calc(-100%_-_4px)]'}`}
-                                                        />
-                                                    </button>
-                                                </FormControl>
-                                            </FormItem>
-                                        );
-                                    }}
-                                />
-                            </div>
-                        </div>
-
-                        <FormField
-                            control={form.control}
-                            name="isPublic"
-                            render={({ field }) => (
-                                <FormItem className="flex flex-row items-center space-x-3 space-y-0 rounded-md my-2">
-                                    <FormControl>
-                                        <Checkbox
-                                            checked={field.value}
-                                            onCheckedChange={field.onChange}
-                                        />
-                                    </FormControl>
-                                    <FormLabel>Public channel</FormLabel>
-                                    <FormDescription>
-                                        Anyone in the workspace can view and join
-                                    </FormDescription>
-                                </FormItem>
-                            )}
-                        />
-
+                        <NameField control={form.control} />
+                        <UsersSelect control={form.control} users={users} watch={form.watch} />
                         <DialogFooter className="flex justify-center sm:justify-center">
-                            <Button type="submit">Create Channel</Button>
+                            <Button 
+                                type="submit" 
+                                disabled={!canSubmit}
+                            >
+                                Create Channel
+                            </Button>
                         </DialogFooter>
                     </form>
                 </Form>
             </DialogContent>
         </Dialog>
+    );
+}
+
+function NameField({ control }: { control: Control<FormValues> }) {
+    return (
+        <FormField
+            control={control}
+            name="name"
+            render={({ field }) => (
+                <FormItem>
+                    <FormLabel>Name</FormLabel>
+                    <FormControl>
+                        <Input placeholder="general" {...field} />
+                    </FormControl>
+                    <FormDescription>
+                        Choose a name for your channel.
+                    </FormDescription>
+                    <FormMessage />
+                </FormItem>
+            )}
+        />
+    );
+}
+
+function UsersSelect({ control, users, watch }: { 
+    control: Control<FormValues>;
+    users: User[];
+    watch: (name: "selectedUsers") => number[];
+}) {
+    const filteredUsers = users.filter(user => !user.is_current);
+    const selectedUsers = watch("selectedUsers");
+    const allUserIds = filteredUsers.map(u => u.id);
+    const allSelected = selectedUsers?.length === filteredUsers.length && 
+        allUserIds.every(id => selectedUsers.includes(id));
+
+    return (
+        <div className="space-y-4">
+            <div className="flex flex-col gap-1.5">
+                <FormLabel className="font-semibold">Select members</FormLabel>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
+                {filteredUsers.map((user) => (
+                    <SelectPill 
+                        key={user.id} 
+                        text={user.name}
+                        icon={User2}
+                        value={user.id}
+                        control={control} 
+                    />
+                ))}
+                <SelectPill
+                    text={allSelected ? "Deselect All" : "Select All"}
+                    icon={allSelected ? CircleSlash : Earth}
+                    value={allUserIds}
+                    control={control}
+                    ariaLabel={allSelected ? "Deselect all users" : "Select all users"}
+                />
+            </div>
+        </div>
     );
 } 

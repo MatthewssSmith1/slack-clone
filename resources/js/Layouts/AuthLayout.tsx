@@ -29,10 +29,10 @@ export default function AuthLayout({ children }: PropsWithChildren) {
 
     return (
         <div className={cn(
-            "grid h-screen grid-rows-[var(--header-height)_1fr] transition-all",
+            "grid h-[100dvh] transition-all grid-rows-[var(--header-height)_1fr] grid-cols-[var(--sidebar-width)_1fr]",
             threadOpen 
-                ? "grid-cols-[var(--sidebar-width)_1fr_1fr]"
-                : "grid-cols-[var(--sidebar-width)_1fr_0fr]"
+                ? "lg:grid-cols-[var(--sidebar-width)_1fr_1fr]"
+                : "lg:grid-cols-[var(--sidebar-width)_1fr_0fr]"
         )}>
             <SidebarHeader />
             <ChannelHeader />

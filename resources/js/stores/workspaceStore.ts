@@ -1,5 +1,5 @@
 import { create, StateCreator } from 'zustand';
-import { useChannelStore } from '@/stores/messageStores';
+import { useChannelStore, useThreadStore } from '@/stores/messageStores';
 import { Channel } from '@/types/slack';
 import axios from 'axios';
 
@@ -9,6 +9,7 @@ interface WorkspaceStore {
     userCount: number;
     fetchChannels: () => Promise<void>;
     setCurrentChannel: (channelId: number) => void;
+    appendChannel: (channel: Channel) => void;
 }
 
 const storeCreator: StateCreator<WorkspaceStore> = (set, get) => ({
@@ -21,7 +22,9 @@ const storeCreator: StateCreator<WorkspaceStore> = (set, get) => ({
             const response = await axios.get<{ channels: Channel[] }>(route('channels.index'));
             const channels = response.data.channels;
             const currentChannel = getChannelFromUrl(channels);
-            const userCount = 1 + (currentChannel?.users.length ?? 0);
+            const userCount = 1 + (currentChannel?.user_ids.length ?? 0);
+
+            console.log(channels);
 
             set({ channels, currentChannel, userCount });
 
@@ -31,12 +34,22 @@ const storeCreator: StateCreator<WorkspaceStore> = (set, get) => ({
         }
     },
 
+    appendChannel: (channel: Channel) => {
+        const { channels } = get();
+        set({ channels: [...channels, channel] });
+        get().setCurrentChannel(channel.id);
+    },
+
     setCurrentChannel: async (channelId: number) => {
         const channel = get().channels.find(c => c.id === channelId);
-        const userCount = 1 + (channel?.users.length ?? 0);
         if (!channel) return;
 
+        const userCount = 1 + (channel?.user_ids.length ?? 0);
         set({ currentChannel: channel, userCount });
+
+        // hide the open thread
+        useThreadStore.setState({ messages: null });
+
         window.history.replaceState({}, '', `/dashboard?channel=${channelId}`);
         await useChannelStore.getState().loadMessages(channelId);
     },
