@@ -15,7 +15,10 @@ class Message extends Model
 
     protected $with = [
         'user',
+        'linksTo',
     ];
+
+    protected $appends = ['links'];
 
     protected $fillable = [
         'user_id',
@@ -49,5 +52,38 @@ class Message extends Model
     public function reactions(): BelongsToMany
     {
         return $this->belongsToMany(User::class, 'reactions')->withPivot('emoji_code');
+    }
+
+    public function linksTo(): BelongsToMany
+    {
+        return $this->belongsToMany(
+            Message::class,
+            'links',
+            'src_msg_id',
+            'tgt_msg_id'
+        )->withPivot('rank', 'title', 'tooltip', 'tgt_created_at');
+    }
+
+    public function linkedFrom(): BelongsToMany
+    {
+        return $this->belongsToMany(
+            Message::class,
+            'links',
+            'tgt_msg_id',
+            'src_msg_id'
+        )->withPivot('rank', 'title', 'tooltip', 'tgt_created_at');
+    }
+
+    public function getLinksAttribute(): array
+    {
+        return $this->linksTo->map(function ($message) {
+            return [
+                'tooltip' => substr($message->content, 0, 100),
+                'channel_id' => $message->channel_id,
+                'message_id' => $message->id,
+                // Optional metadata for file chunks
+                'chunk_index' => $message->chunk_index ?? null,
+            ];
+        })->all();
     }
 }

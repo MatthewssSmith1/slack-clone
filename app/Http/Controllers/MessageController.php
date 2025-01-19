@@ -2,12 +2,12 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Channel;
-use App\Models\Message;
+use App\Models\{Channel, Message, Link};
 use App\Jobs\MessageEmbeddingJob;
 use App\Data\AssistantOptions;
 use App\Events\MessagePosted;
 use Illuminate\Http\{JsonResponse, Request};
+use Probots\Pinecone\Client as Pinecone;
 use Illuminate\Support\Facades\{Auth, DB, Log, Storage};
 use Illuminate\Validation\Rules\File;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
@@ -27,12 +27,14 @@ class MessageController extends Controller
             'cursor' => ['sometimes', 'integer', 'min:0']
         ]);
 
-        // TODO: select only needed columns (get data from userStore via user_id instead of including related user)
         $query = $channel->messages()
             ->select('messages.*')
             ->with('user:id,name,profile_picture')
             ->with(['reactions' => function ($query) {
                 $query->select('emoji_code', 'user_id', 'message_id');
+            }])
+            ->with(['links' => function ($query) {
+                $query->select('id', 'message_id', 'tgt_msg_id', 'rank', 'attachment_path', 'attachment_name');
             }]);
 
         if (isset($validated['parentId'])) {
@@ -50,13 +52,7 @@ class MessageController extends Controller
         $messages = $query->orderBy('created_at', 'desc')->limit(self::CHUNK_SIZE)->get();
 
         $prevMsg = null;
-        foreach ($messages as $msg) {
-            $msg['is_continuation'] = $prevMsg && 
-                $msg->user_id && 
-                $prevMsg->user_id && 
-                $msg->user_id === $prevMsg->user_id;
-            $prevMsg = $msg;
-
+        foreach ($messages as $i => $msg) {
             $msg->setRelation('reactions', 
                 collect($msg->reactions->groupBy('emoji_code'))->map(function ($group) {
                     return [
@@ -65,6 +61,9 @@ class MessageController extends Controller
                     ];
                 })->values()
             );
+
+            $prevMsg['is_continuation'] = $prevMsg && ($prevMsg->user_id === $msg->user_id);
+            $prevMsg = $msg;
         }
         if ($prevMsg) $prevMsg['is_continuation'] = false;
 
@@ -82,40 +81,67 @@ class MessageController extends Controller
         $this->authorize('view', $channel);
 
         $validated = $request->validate([
-            'content' => ['nullable', 'string', 'max:2000'],
+            'content' => ['sometimes', 'nullable', 'string', 'max:2000'],
             'attachment' => ['sometimes', File::default()->max('10mb')],
             'parentId' => ['sometimes', 'integer', 'exists:messages,id'],
             ...AssistantOptions::validationRules('assistantOpts'),
         ]);
+        $validated['content'] ??= '';
 
-        $message = $channel->messages()->create($this->getMessageFields($validated));
+        $message = DB::transaction(function () use ($channel, $validated) {
+            $message = $channel->messages()->create([
+                'user_id' => Auth::id(),
+                'content' => $validated['content'],
+                'parent_id' => $validated['parentId'] ?? null,
+            ]);
 
-        // send to other users in channel
+            if (isset($validated['attachment'])) {
+                $file = $validated['attachment'];
+                $path = Storage::putFile('attachments', $file);
+                
+                $message->links()->create([
+                    'attachment_path' => $path,
+                    'attachment_name' => $file->getClientOriginalName(),
+                    'rank' => null, // null rank indicates owned attachment
+                ]);
+            }
+
+            return $message;
+        });
+
         broadcast(new MessagePosted($message));
         
-        // assistant responds, eventually broadcasted to the authed user's assistant channel
         MessageEmbeddingJob::dispatch(
             $message, 
             isset($validated['assistantOpts']) ? AssistantOptions::fromJson($validated['assistantOpts']) : null
         );
 
-        return $message->load('user:id,name,profile_picture');
+        return $message->load(['user:id,name,profile_picture', 'links']);
     }
 
-    private function getMessageFields(array $data): array
+    public function destroy(Pinecone $pinecone, Message $message): JsonResponse
     {
-        $validated['content'] ??= '';
-        $fields = ['user_id' => Auth::id(), 'content' => $data['content']];
+        $this->authorize('destroy', $message);
 
-        if (isset($data['parentId'])) $fields['parent_id'] = $data['parentId'];
+        try {   
+            DB::transaction(function () use ($message) {
+                // Delete any owned attachments (where rank is null)
+                foreach ($message->links()->whereNull('rank')->get() as $link) {
+                    if ($link->attachment_path) {
+                        Storage::delete($link->attachment_path);
+                    }
+                }
+                
+                $message->links()->delete();
+                $message->delete();
+            });
 
-        if (isset($data['attachment'])) {
-            $file = $data['attachment'];
-            $fields['attachment_name'] = $file->getClientOriginalName();
-            $fields['attachment_path'] = Storage::putFile('attachments', $file);
+            // TODO: something like $pinecone->data()->vectors()->delete([$message->id]);
+
+            return response()->json(['success' => true]);
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 500);
         }
-
-        return $fields;
     }
 } 
 

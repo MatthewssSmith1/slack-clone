@@ -1,6 +1,9 @@
-import { User as UserIcon, Link as LinkIcon } from 'lucide-react';
+import { useWorkspaceStore } from '@/stores/workspaceStore';
+import { User as UserIcon } from 'lucide-react';
 import MessageHoverMenu from '@/Components/MessageHoverMenu';
+import ResourcePreview from '@/Components/ResourcePreview';
 import ReactionList from '@/Components/ReactionList';
+import { useAuth } from '@/hooks/use-auth';
 import { Message } from '@/types/slack';
 import { cn } from '@/lib/utils';
 
@@ -19,7 +22,25 @@ export default function MessageView({ message, isThread }: { message: Message, i
             <div className="flex-1">
                 <Header message={message} />
                 <p className="text-sm text-foreground">{message.content}</p>
-                <AttachmentView message={message} />
+                <nav className="flex flex-wrap gap-2 mt-2">
+                    {message.links?.map((link, i) => (
+                        <ResourcePreview
+                            key={i}
+                            link={link}
+                            onClick={() => {
+                                if (link.attachment_path) {
+                                    window.location.href = route('attachments.download', { message: message.id });
+                                } else if (link.message_id) {
+                                    const { currentChannel, setCurrentChannel } = useWorkspaceStore.getState();
+                                    if (currentChannel?.id !== link.channel_id) {
+                                        setCurrentChannel(link.channel_id);
+                                    }
+                                    // TODO: scroll to message
+                                }
+                            }}
+                        />
+                    ))}
+                </nav>
                 <ReactionList message={message} />
             </div>
             <MessageHoverMenu message={message} isThread={isThread} />
@@ -33,31 +54,20 @@ const TIME_FORMAT: Intl.DateTimeFormatOptions = {
 };
 
 function Header({ message }: { message: Message }) {
+    const { user } = useAuth();
+
     if (message.is_continuation) return null;
+
+    let name = 'You';
+    if (message?.user?.id !== user?.id) 
+        name = message.user?.name || 'Assistant';
 
     return (
         <div className="flex items-center gap-2 mb-0.5">
-            <span className="font-medium whitespace-nowrap overflow-hidden text-ellipsis">{message.user?.name || 'Assistant'}</span>
+            <span className="font-medium whitespace-nowrap overflow-hidden text-ellipsis">{name}</span>
             <span className="text-xs mt-[1px] text-muted-foreground select-none whitespace-nowrap">
                 {new Date(message.created_at).toLocaleTimeString([], TIME_FORMAT)}
             </span>
         </div>
-    );
-} 
-
-function AttachmentView({ message }: { message: Message }) {
-    if (!message.attachment_name) return null;
-
-    return (
-        <a
-            href={route('attachments.download', { message: message.id })}
-            className={cn(
-                "inline-flex items-center gap-2 my-1 p-1.5 pr-2 cursor-pointer transition-all",
-                "rounded-lg bg-background group-hover:bg-muted shadow-inner hover:shadow"
-            )}
-        >
-            <LinkIcon className="size-3 text-muted-foreground" />
-            <span className="text-sm text-muted-foreground">{message.attachment_name}</span>
-        </a>
     );
 }

@@ -75,8 +75,6 @@ class SearchController extends Controller
     {
         $userPrompt = $this->formatCompletionPrompt($query, $matches);
 
-        Log::info($userPrompt);
-
         $response = $openai->chat()->create([
             'model' => 'gpt-4',
             'messages' => [

@@ -17,6 +17,20 @@ export interface Channel {
     user_ids: number[];
 } 
 
+export interface Link {
+    tooltip: string;
+    rank: number | null;
+    channel_id: number;
+    message_id: number | null;
+    title: string;
+    created_at: string;
+    // For file attachments and references
+    attachment_path?: string;
+    attachment_name?: string;
+    // For grouping chunks from the same file
+    chunk_index?: number;
+}
+
 export interface Message {
     id: number;
     content: string;
@@ -25,7 +39,7 @@ export interface Message {
     reactions: Reaction[];
     is_continuation?: boolean;
     parent_id?: number;
-    attachment_name?: string;
+    links: Link[];
 }
 
 export interface Reaction {

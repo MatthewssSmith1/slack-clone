@@ -19,6 +19,7 @@ export interface MessagesState {
     messages: Message[] | null;
     loadMessages: (channelId: number, parentId?: number, cursor?: number) => Promise<void>;
     addMessage: (message: Message, shouldScroll: boolean) => void;
+    deleteMessage: (messageId: number) => Promise<void>;
     updateReaction: (messageId: number, userId: number, emojiCode: string) => void;
 }
 
@@ -83,6 +84,19 @@ const createMessagesStore = (isThread: boolean) => create<MessagesState>((set, g
             setTimeout(() => {
                 get().setIndicator(false);
             }, 3000);
+        }
+    },
+
+    deleteMessage: async (messageId: number) => {
+        // TODO: Implement optimistic updates
+        try {
+            // hide message
+            await axios.delete(route('messages.destroy', messageId));
+            set(state => ({
+                messages: state.messages?.filter(msg => msg.id !== messageId) ?? null
+            }));
+        } catch (error) {
+            // show message
         }
     },
 

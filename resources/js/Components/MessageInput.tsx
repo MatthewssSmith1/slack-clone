@@ -1,7 +1,7 @@
 import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from '@/components/ui/tooltip';
 import { FileUpload, FileWithPreview } from '@/components/ui/file-upload';
+import { useAssistantOptionsStore } from './AssistantOptions';
 import React, { useMemo, useState } from 'react';
-import { useAssistantFilterStore } from './AssistantFilter';
 import { useWorkspaceStore } from '@/stores/workspaceStore';
 import NewMessageIndicator from './NewMessageIndicator';
 import { MessagesState } from '@/stores/messageStores';
@@ -39,12 +39,13 @@ export default function MessageInput({ addMessage, parentId, isThread }: Props) 
         
         const formData = new FormData();
         formData.append('content', content);
-        // should this be a string if its `['sometimes', 'integer', 'exists:messages,id']` on the backend:
         if (parentId) formData.append('parentId', parentId.toString()); 
         if (attachment) formData.append('attachment', attachment);
 
-        if (currentChannel.channel_type === ChannelType.Assistant)
-            formData.append('assistantOpts', JSON.stringify(useAssistantFilterStore.getState()));
+        if (currentChannel.channel_type === ChannelType.Assistant) {
+            const opts = useAssistantOptionsStore.getState();
+            formData.append('assistantOpts', JSON.stringify(opts));
+        }
 
         setMessage('');
         setAttachment(null);

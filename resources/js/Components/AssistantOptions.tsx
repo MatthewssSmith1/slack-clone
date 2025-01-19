@@ -23,7 +23,7 @@ import {
 } from "@/components/ui/tooltip";
 import { Separator } from "@/components/ui/separator";
 
-interface AssistantFilterStore {
+interface AssistantOptionsStore {
     channelId: number | null;
     userId: number | null;
     isPersona: boolean;
@@ -32,7 +32,7 @@ interface AssistantFilterStore {
     setPersona: (isPersona: boolean) => void;
 }
 
-export const useAssistantFilterStore = create<AssistantFilterStore>((set, get) => ({
+export const useAssistantOptionsStore = create<AssistantOptionsStore>((set, get) => ({
     channelId: null,
     userId: null,
     isPersona: false,
@@ -58,7 +58,7 @@ export const useAssistantFilterStore = create<AssistantFilterStore>((set, get) =
     setPersona: (isPersona) => set({ isPersona }),
 }));
 
-export default function AssistantFilter() {
+export default function AssistantOptions() {
     return (
         <div className="flex items-center gap-3">
             <Filter className="size-5 text-muted-foreground" />
@@ -73,7 +73,7 @@ export default function AssistantFilter() {
 
 function ChannelSelect() {
     const { channels } = useWorkspaceStore();
-    const { channelId, setChannel } = useAssistantFilterStore();
+    const { channelId, setChannel } = useAssistantOptionsStore();
 
     const publicChannels = channels.filter(c => c.channel_type === ChannelType.Public);
     const directMessages = channels.filter(c => c.channel_type === ChannelType.Direct);
@@ -118,7 +118,7 @@ function ChannelSelect() {
 }
 
 function UserSelect() {
-    const { channelId, userId, setUser } = useAssistantFilterStore();
+    const { channelId, userId, setUser } = useAssistantOptionsStore();
     const { channels } = useWorkspaceStore();
     const { users } = useUserStore();
 
@@ -172,8 +172,9 @@ function Option({ label, value, icon }: { label: string; value: string; icon: Ch
         </SelectItem>
     );
 }
+
 function PersonaCheckbox() {
-    const { isPersona, setPersona, userId } = useAssistantFilterStore();
+    const { isPersona, setPersona, userId } = useAssistantOptionsStore();
 
     return (
         <TooltipProvider>
@@ -202,7 +203,7 @@ function PersonaCheckbox() {
 }
 
 function VoiceCheckbox() {
-    // const { isVoice, setVoice, userId } = useAssistantFilterStore();
+    // const { isVoice, setVoice, userId } = useAssistantOptionsStore();
 
     return (
         <TooltipProvider>
@@ -228,4 +229,4 @@ function VoiceCheckbox() {
             </Tooltip>
         </TooltipProvider>
     );
-}
+} 

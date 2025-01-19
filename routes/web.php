@@ -31,6 +31,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::get('/messages/{channel}', [MessageController::class, 'index'])->name('messages.index');
     Route::post('/messages/{channel}', [MessageController::class, 'store'])->name('messages.store');
+    Route::delete('/messages/{message}', [MessageController::class, 'destroy'])->name('messages.destroy');
 
     Route::post('/reactions/{message}', [ReactionController::class, 'store'])->name('reactions.store');
     Route::delete('/reactions/{message}', [ReactionController::class, 'destroy'])->name('reactions.destroy');

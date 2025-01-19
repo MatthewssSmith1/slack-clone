@@ -7,7 +7,7 @@ import { Suspense } from 'react';
 import { useAuth } from '@/hooks/use-auth';
 import ChannelIcon from './ChannelIcon';
 import { Head } from '@inertiajs/react';
-import AssistantFilter from './AssistantFilter';
+import AssistantOptions from './AssistantOptions';
 
 export default function ChannelHeader() {
     return (
@@ -40,7 +40,7 @@ function Content() {
                 <div className="grow" />
 
                 {channelType === ChannelType.Public && <MemberCount count={userCount} />}
-                {channelType === ChannelType.Assistant && <AssistantFilter />}
+                {channelType === ChannelType.Assistant && <AssistantOptions />}
             </HeaderWrapper>
         </>
     );
